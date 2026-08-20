@@ -1,0 +1,12 @@
+{
+  "nvr_ip": "192.168.100.203",
+  "rtsp_port": 554,
+  "model": "yolo11s.pt",
+  "imgsz": 640,
+  "person_conf": 0.28,
+  "phone_conf": 0.22,
+  "iou": 0.45,
+  "max_ai_fps": 8.0,
+  "display_max_width": 1600,
+  "tracker": "bytetrack.yaml"
+}
