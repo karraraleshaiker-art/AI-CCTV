@@ -107,3 +107,33 @@ Each changelog entry must strictly follow this structure:
   - `.gitignore`: Lines 1–20 (Added ignore rules for `*.pt`, `*.onnx`, `*.engine`, `.DS_Store`, `.vscode/`, `.idea/`).
 
 ---
+
+### 🏷️ [Log #003] - FastAPI Web Vision Platform, Factory Logo Integration, Interactive Zone Drawer & Launcher Separation
+- **Author**: Ali Al-Khazali
+- **Timestamp**: 2026-08-22 04:05:00 UTC+3
+- **AI Agent**: Antigravity
+- **Objective / Purpose**:
+  - Transitioned the entire system from traditional CLI / OpenCV desktop window to a modern, high-performance **FastAPI Web Platform** (`app.py`).
+  - Analyzed and integrated the official Al Noor Factory logos (`logo.png` & `Al Noor Factory logo.jpg`) with solar teal/charcoal styling and branding.
+  - Implemented multi-camera concurrent streaming (Pilot Phase 1: Cam 14 & Cam 15) with decoupled RTSP frame ingestion.
+  - Built interactive browser-based **Polygonal Zone Drawer** enabling mouse-based creation of Workstation and Restricted safety zones.
+  - Implemented temporal rules engine detecting workstation absence (>120s) and active phone violations (>5s) with live incident cards and supervisor verification buttons (`Verify` / `Dismiss`).
+  - Separated `logs_reader.py` into an independent on-demand audit tool while updating `sync_github.command`, `sync_github.sh`, and `run_ai_cctv.bat` to launch the FastAPI web interface directly.
+- **Affected Files**:
+  - `[ADDED]` `app.py`
+  - `[ADDED]` `static/logo.png`
+  - `[ADDED]` `static/factory_logo.jpg`
+  - `[MODIFIED]` `settings.json`
+  - `[MODIFIED]` `sync_github.command`
+  - `[MODIFIED]` `sync_github.sh`
+  - `[MODIFIED]` `run_ai_cctv.bat`
+  - `[MODIFIED]` `logs.md`
+- **Line Changes Breakdown**:
+  - `app.py`: Lines 1–850 (Built complete FastAPI backend, MJPEG multi-camera streaming, YOLO11 inference, rules engine, and embedded dashboard UI).
+  - `settings.json`: Lines 1–42 (Added dual-camera configuration, zone schemas, and absence/phone alert thresholds).
+  - `sync_github.command`: Lines 1–45 (Updated launcher to start FastAPI app.py on macOS).
+  - `sync_github.sh`: Lines 1–45 (Updated launcher to start FastAPI app.py for Linux / Git Bash).
+  - `run_ai_cctv.bat`: Lines 1–20 (Updated Windows runner to invoke app.py).
+  - `logs.md`: Lines 110–148 (Added Log #003 entry).
+
+---

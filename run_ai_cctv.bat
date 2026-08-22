@@ -1,9 +1,10 @@
 @echo off
 setlocal
-title AI CCTV v0.4 - Stable Core
+title AI CCTV Vision Platform - Al Noor Solar Factory
 cd /d "%~dp0"
 echo ==========================================
-echo       AI CCTV v0.4 - STABLE CORE
+echo    AI CCTV Web Platform (FastAPI)
+echo    Al Noor Factory for Solar Panels
 echo ==========================================
 echo.
 if not exist ".venv\Scripts\python.exe" (
@@ -13,7 +14,7 @@ if not exist ".venv\Scripts\python.exe" (
   exit /b 1
 )
 set "OPENCV_FFMPEG_CAPTURE_OPTIONS=rtsp_transport;tcp"
-".venv\Scripts\python.exe" main.py
+".venv\Scripts\python.exe" app.py
 echo.
 echo Application closed.
 pause
