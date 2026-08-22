@@ -10,6 +10,7 @@ import base64
 import getpass
 import json
 import os
+import socket
 import sys
 import threading
 import time
@@ -18,8 +19,17 @@ from pathlib import Path
 from typing import Dict, List, Optional
 from urllib.parse import quote
 
+# Suppress noisy OpenCV FFMPEG connection timeouts when developing locally
+os.environ["OPENCV_LOG_LEVEL"] = "ERROR"
+os.environ["OPENCV_FFMPEG_LOGLEVEL"] = "-8"
+os.environ["OPENCV_FFMPEG_CAPTURE_OPTIONS"] = "rtsp_transport;tcp|stimeout;1500000"
+
 import cv2
 import numpy as np
+try:
+    cv2.setLogLevel(cv2.LOG_LEVEL_ERROR)
+except Exception:
+    pass
 import psutil
 import torch
 import uvicorn
@@ -161,8 +171,16 @@ def add_incident(incident: Incident):
 
     threading.Thread(target=_save_bg, daemon=True).start()
 
+def is_nvr_online(ip: str, port: int = 554, timeout: float = 0.35) -> bool:
+    """Fast non-blocking TCP socket check to verify if physical NVR is reachable on LAN."""
+    try:
+        with socket.create_connection((ip, port), timeout=timeout):
+            return True
+    except Exception:
+        return False
+
 # ---------------------------------------------------------------------------
-# Camera RTSP Stream Worker
+# Camera Stream Handling (Threaded Video Ingestion)
 # ---------------------------------------------------------------------------
 class CameraStream:
     def __init__(self, cam_id: int, suffix: str = "01"):
@@ -178,6 +196,7 @@ class CameraStream:
         self.status = "INIT"
         self.fps = 0.0
         self.last_frame_time = 0.0
+        self.last_nvr_probe = 0.0
         self.width = 1280
         self.height = 720
 
@@ -201,7 +220,6 @@ class CameraStream:
 
     def _open_capture(self):
         url = self.get_rtsp_url()
-        os.environ["OPENCV_FFMPEG_CAPTURE_OPTIONS"] = "rtsp_transport;tcp|stimeout;4000000"
         cap = cv2.VideoCapture(url, cv2.CAP_FFMPEG)
         try:
             cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)
@@ -236,27 +254,39 @@ class CameraStream:
                     cv2.FONT_HERSHEY_SIMPLEX, 0.65, (240, 240, 240), 2)
         cv2.putText(img, f"RTSP: {self.get_rtsp_url()}", (35, 75),
                     cv2.FONT_HERSHEY_SIMPLEX, 0.42, (150, 160, 180), 1)
-        cv2.putText(img, f"STATUS: {self.status} (RETRYING NVR ON {SETTINGS.get('nvr_ip')})", (35, 96),
+        cv2.putText(img, f"STATUS: {self.status} ({SETTINGS.get('nvr_ip')})", (35, 96),
                     cv2.FONT_HERSHEY_SIMPLEX, 0.45, (6, 182, 212), 1)
         return img
 
     def _capture_loop(self):
         fps_count = 0
         fps_t = time.time()
-        synthetic_mode = False
+        synthetic_mode = True
 
         while self.running:
-            if self.cap is None or not self.cap.isOpened():
-                self.status = "CONNECTING"
-                try:
-                    self.cap = self._open_capture()
-                except Exception as e:
-                    self.cap = None
+            now = time.time()
+            nvr_ip = SETTINGS.get("nvr_ip", "192.168.100.203")
+            rtsp_port = int(SETTINGS.get("rtsp_port", 554))
 
-                if self.cap is None or not self.cap.isOpened():
-                    self.status = "OFFLINE / SIMULATING"
+            # Fast non-blocking NVR connectivity check before calling VideoCapture
+            if self.cap is None or not self.cap.isOpened():
+                if now - self.last_nvr_probe >= 10.0 or self.last_nvr_probe == 0.0:
+                    self.last_nvr_probe = now
+                    if is_nvr_online(nvr_ip, rtsp_port, timeout=0.35):
+                        self.status = "CONNECTING"
+                        try:
+                            self.cap = self._open_capture()
+                            if self.cap and self.cap.isOpened():
+                                synthetic_mode = False
+                                self.status = "LIVE"
+                        except Exception:
+                            self.cap = None
+                            synthetic_mode = True
+                    else:
+                        self.status = "SIMULATION (NVR UNREACHABLE)"
+                        synthetic_mode = True
+                else:
                     synthetic_mode = True
-                    time.sleep(0.5)
 
             if synthetic_mode:
                 f = self._generate_synthetic_frame(self.seq)
@@ -265,22 +295,20 @@ class CameraStream:
                     self.frame = f
                     self.seq += 1
                     self.height, self.width = f.shape[:2]
-                # Periodically attempt real connection
-                if self.seq % 150 == 0:
-                    synthetic_mode = False
-                    if self.cap:
-                        self.cap.release()
-                    self.cap = None
                 continue
 
             ok, f = self.cap.read()
             if not ok or f is None:
                 self.status = "RECONNECTING"
                 if self.cap:
-                    self.cap.release()
+                    try:
+                        self.cap.release()
+                    except Exception:
+                        pass
                 self.cap = None
                 synthetic_mode = True
-                time.sleep(0.2)
+                self.last_nvr_probe = now
+                time.sleep(0.1)
                 continue
 
             self.status = "LIVE"

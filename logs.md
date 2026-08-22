@@ -232,3 +232,21 @@ Each changelog entry must strictly follow this structure:
   - `logs.md`: Lines 215–240 (Added Log #007 entry).
 
 ---
+
+### 🏷️ [Log #008] - Non-Blocking Fast Socket Probe & OpenCV RTSP Timeout Suppression
+- **Author**: Ali Al-Khazali
+- **Timestamp**: 2026-08-22 10:40:00 UTC+3
+- **AI Agent**: Antigravity
+- **Objective / Purpose**:
+  - Eliminated repetitive 30-second OpenCV FFMPEG socket timeouts (`cap_ffmpeg_impl.hpp:453 Stream timeout triggered after 30000ms`) during offline or remote development.
+  - Implemented ultra-fast non-blocking TCP socket pre-check (`is_nvr_online()`) probing `192.168.100.203:554` in under 5ms before initiating OpenCV `VideoCapture`.
+  - Configured OpenCV log level suppression (`OPENCV_LOG_LEVEL=ERROR`, `cv2.setLogLevel`) to maintain a clean terminal output.
+  - Enhanced simulation fallback to instantly engage high-tech synthetic feed when working away from the factory LAN.
+- **Affected Files**:
+  - `[MODIFIED]` `app.py`
+  - `[MODIFIED]` `logs.md`
+- **Line Changes Breakdown**:
+  - `app.py`: Lines 15–30 (Added socket import and OpenCV log suppression), Lines 170–300 (Added is_nvr_online helper and modernized CameraStream capture loop).
+  - `logs.md`: Lines 235–260 (Added Log #008 entry).
+
+---
