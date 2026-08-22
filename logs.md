@@ -2,6 +2,33 @@
 
 ---
 
+---
+  [Log #010] - Dual Launcher Recovery and Python Environment Restoration
+- Author: Karrar Haider
+- Timestamp: 2026-08-22 15:26:06 UTC+3
+- AI Agent: Codex
+- Objective / Purpose:
+  - Restored Karrar's original Stable Core workflow by adding a dedicated launcher for `main.py` without removing Ali Nasser's newer FastAPI Web Platform work.
+  - Added reproducible Python environment setup files so the missing `.venv` can be rebuilt with Python 3.12 and the required AI-CCTV dependencies.
+  - Converted the main Windows launcher into a safe choice menu so factory monitoring can continue through either the proven OpenCV window or the newer dashboard path.
+- Affected Files:
+  - `[ADDED]` `requirements-stable.txt`
+  - `[ADDED]` `requirements-web.txt`
+  - `[ADDED]` `setup_venv.bat`
+  - `[ADDED]` `run_stable_core.bat`
+  - `[ADDED]` `run_web_platform.bat`
+  - `[MODIFIED]` `run_ai_cctv.bat`
+  - `[MODIFIED]` `logs.md`
+- Line Changes Breakdown:
+  - `requirements-stable.txt`: Lines 1-4 (Defined the minimal dependency set for Karrar's original OpenCV, Ultralytics, and RTSP Stable Core workflow).
+  - `requirements-web.txt`: Lines 1-11 (Defined the full FastAPI, SQLAlchemy, Uvicorn, and AI runtime dependency set for the Web Platform workflow).
+  - `setup_venv.bat`: Lines 1-64 (Added Python 3.12 virtual environment creation, pip upgrade, and selectable dependency installation).
+  - `run_stable_core.bat`: Lines 1-24 (Added dedicated launcher for the original `main.py` Stable Core application).
+  - `run_web_platform.bat`: Lines 1-25 (Added dedicated launcher for `logs_reader.py` and `app.py` web dashboard execution).
+  - `run_ai_cctv.bat`: Lines 1-28 (Reworked the main launcher into a mode selector that preserves both developer workflows).
+  - `logs.md`: Lines 270-295 (Added Log #010 entry documenting the recovery and environment stabilization work).
+---
+
 # Section 1: Project Overview & Scope
 
 ### System Context: Solar Panel Manufacturing Facility
