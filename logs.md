@@ -18,7 +18,7 @@ The **AI-CCTV** system is an intelligent, automated computer vision and complian
 3. **Human-in-the-Loop Verification**: AI identifies, prioritizes, and logs incidents with timestamped visual evidence, presenting them to authorized supervisors for final decision-making.
 
 ### 👥 Core Project Team
-- **Ali Al-Khazali** (Co-Founder & Lead Engineer)
+- **Ali Nasser** (Co-Founder & Lead Engineer)
 - **Karrar Haider** (Co-Founder & Lead Engineer)
 
 ---
@@ -39,7 +39,7 @@ Each changelog entry must strictly follow this structure:
 
 ```markdown
 ### 🏷️ [Log #ID] - <Short Summary of Change>
-- **Author**: <Ali Al-Khazali | Karrar Haider>
+- **Author**: <Ali Nasser | Karrar Haider>
 - **Timestamp**: <YYYY-MM-DD HH:MM:SS Timezone>
 - **AI Agent**: <Antigravity | Codex | Other>
 - **Objective / Purpose**: <Detailed explanation of why this change was made>
@@ -56,7 +56,7 @@ Each changelog entry must strictly follow this structure:
 ---
 
 ### 🏷️ [Log #001] - Initial Core Architecture Release (v0.4 Stable Core)
-- **Author**: Karrar Haider & Ali Al-Khazali
+- **Author**: Karrar Haider & Ali Nasser
 - **Timestamp**: 2026-08-22 01:00:00 UTC+3
 - **AI Agent**: Antigravity
 - **Objective / Purpose**: 
@@ -82,7 +82,7 @@ Each changelog entry must strictly follow this structure:
 ---
 
 ### 🏷️ [Log #002] - Factory Proposal Integration, Interactive Logs Reader & Multi-Platform Sync Automation
-- **Author**: Ali Al-Khazali
+- **Author**: Ali Nasser
 - **Timestamp**: 2026-08-22 03:45:00 UTC+3
 - **AI Agent**: Antigravity
 - **Objective / Purpose**:
@@ -109,7 +109,7 @@ Each changelog entry must strictly follow this structure:
 ---
 
 ### 🏷️ [Log #003] - FastAPI Web Vision Platform, Factory Logo Integration, Interactive Zone Drawer & Launcher Separation
-- **Author**: Ali Al-Khazali
+- **Author**: Ali Nasser
 - **Timestamp**: 2026-08-22 04:05:00 UTC+3
 - **AI Agent**: Antigravity
 - **Objective / Purpose**:
@@ -139,7 +139,7 @@ Each changelog entry must strictly follow this structure:
 ---
 
 ### 🏷️ [Log #004] - Independent Dual-Process Launcher, Navbar Cleanup & FastAPI Lifespan Handler Migration
-- **Author**: Ali Al-Khazali
+- **Author**: Ali Nasser
 - **Timestamp**: 2026-08-22 10:00:00 UTC+3
 - **AI Agent**: Antigravity
 - **Objective / Purpose**:
@@ -164,7 +164,7 @@ Each changelog entry must strictly follow this structure:
 ---
 
 ### 🏷️ [Log #005] - SQLAlchemy Async ORM & SQLite WAL Database Architecture Integration
-- **Author**: Ali Al-Khazali
+- **Author**: Ali Nasser
 - **Timestamp**: 2026-08-22 10:10:00 UTC+3
 - **AI Agent**: Antigravity
 - **Objective / Purpose**:
@@ -190,7 +190,7 @@ Each changelog entry must strictly follow this structure:
 ---
 
 ### 🏷️ [Log #006] - Biometric Facial Recognition Engine, Employee Directory & Keyframe Track-Fusion
-- **Author**: Ali Al-Khazali
+- **Author**: Ali Nasser
 - **Timestamp**: 2026-08-22 10:20:00 UTC+3
 - **AI Agent**: Antigravity
 - **Objective / Purpose**:
@@ -216,7 +216,7 @@ Each changelog entry must strictly follow this structure:
 ---
 
 ### 🏷️ [Log #007] - Logs Reader Multi-Line Markdown Parser & UI Card Scope Rendering Fix
-- **Author**: Ali Al-Khazali
+- **Author**: Ali Nasser
 - **Timestamp**: 2026-08-22 10:25:00 UTC+3
 - **AI Agent**: Antigravity
 - **Objective / Purpose**:
@@ -234,7 +234,7 @@ Each changelog entry must strictly follow this structure:
 ---
 
 ### 🏷️ [Log #008] - Non-Blocking Fast Socket Probe & OpenCV RTSP Timeout Suppression
-- **Author**: Ali Al-Khazali
+- **Author**: Ali Nasser
 - **Timestamp**: 2026-08-22 10:40:00 UTC+3
 - **AI Agent**: Antigravity
 - **Objective / Purpose**:

@@ -1467,7 +1467,7 @@ DASHBOARD_HTML = r"""<!DOCTYPE html>
                 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
                     <div>
                         <label style="font-size: 0.75rem; color: var(--text-muted);">Full Name (الاسم الكامل):</label>
-                        <input type="text" id="empNameInput" class="btn" style="width: 100%; margin-top: 0.2rem;" placeholder="e.g. Ali Al-Khazali">
+                        <input type="text" id="empNameInput" class="btn" style="width: 100%; margin-top: 0.2rem;" placeholder="e.g. Ali Nasser">
                     </div>
                     <div>
                         <label style="font-size: 0.75rem; color: var(--text-muted);">Employee Code (الرقم الوظيفي):</label>

@@ -523,7 +523,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
                     <span class="live-dot"></span> Solar Panel Factory AI CCTV
                 </div>
                 <h1 class="title">System Logs & Changelog</h1>
-                <p class="subtitle">Engineering audit trail & collaboration registry between Ali Al-Khazali & Karrar Haider</p>
+                <p class="subtitle">Engineering audit trail & collaboration registry between Ali Nasser & Karrar Haider</p>
             </div>
             <div class="header-actions">
                 <button class="btn" onclick="fetchLogs()">
@@ -579,7 +579,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
             </div>
             <div class="filter-buttons">
                 <button class="filter-btn active" onclick="setAuthorFilter('ALL', this)">All Logs</button>
-                <button class="filter-btn" onclick="setAuthorFilter('Ali Al-Khazali', this)">Ali Al-Khazali</button>
+                <button class="filter-btn" onclick="setAuthorFilter('Ali Nasser', this)">Ali Nasser</button>
                 <button class="filter-btn" onclick="setAuthorFilter('Karrar Haider', this)">Karrar Haider</button>
             </div>
         </div>
