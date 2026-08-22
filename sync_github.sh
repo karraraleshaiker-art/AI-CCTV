@@ -50,22 +50,36 @@ case "$(uname -s 2>/dev/null || echo unknown)" in
     MINGW*|MSYS*|CYGWIN*) IS_WINDOWS_BASH=1 ;;
 esac
 
-if [ -f ".venv/bin/python" ]; then
-    PYTHON_CMD="./.venv/bin/python"
-elif [ -f ".venv/Scripts/python.exe" ]; then
-    PYTHON_CMD="./.venv/Scripts/python.exe"
-elif [ -f "venv/bin/python" ]; then
-    PYTHON_CMD="./venv/bin/python"
-elif [ -f "venv/Scripts/python.exe" ]; then
-    PYTHON_CMD="./venv/Scripts/python.exe"
-elif [ "$IS_WINDOWS_BASH" -eq 1 ]; then
-    echo "ERROR: .venv was not found."
-    echo "Run setup_venv.bat first, then run sync_github.bat again."
-    exit 1
-elif command -v python3 >/dev/null 2>&1; then
-    PYTHON_CMD="python3"
-elif command -v python >/dev/null 2>&1; then
-    PYTHON_CMD="python"
+detect_python() {
+    if [ -f ".venv/bin/python" ]; then
+        PYTHON_CMD="./.venv/bin/python"
+    elif [ -f ".venv/Scripts/python.exe" ]; then
+        PYTHON_CMD="./.venv/Scripts/python.exe"
+    elif [ -f "venv/bin/python" ]; then
+        PYTHON_CMD="./venv/bin/python"
+    elif [ -f "venv/Scripts/python.exe" ]; then
+        PYTHON_CMD="./venv/Scripts/python.exe"
+    elif [ "$IS_WINDOWS_BASH" -eq 0 ] && command -v python3 >/dev/null 2>&1; then
+        PYTHON_CMD="python3"
+    elif [ "$IS_WINDOWS_BASH" -eq 0 ] && command -v python >/dev/null 2>&1; then
+        PYTHON_CMD="python"
+    fi
+}
+
+detect_python
+
+if [ -z "$PYTHON_CMD" ] && [ "$IS_WINDOWS_BASH" -eq 1 ]; then
+    echo "[SETUP] .venv was not found. Starting setup_venv.bat..."
+    echo "Choose option 2 for the Full Web Platform when prompted."
+    echo ""
+
+    if ! cmd.exe /c setup_venv.bat; then
+        echo "ERROR: setup_venv.bat did not complete successfully."
+        exit 1
+    fi
+
+    PYTHON_CMD=""
+    detect_python
 fi
 
 if [ -z "$PYTHON_CMD" ]; then

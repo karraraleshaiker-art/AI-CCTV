@@ -320,3 +320,20 @@ Each changelog entry must strictly follow this structure:
   - `sync_github.sh`: Lines 5-75 (Added robust script directory resolution, Git repository validation, Windows Git Bash detection, venv preference, and clearer Python setup errors).
   - `logs.md`: Lines 305-324 (Added Log #011 entry documenting the sync launcher repair and environment guard).
 ---
+
+---
+  [Log #012] - Automatic Windows Virtual Environment Setup During Sync
+- Author: Karrar Haider
+- Timestamp: 2026-08-22 15:49:53 UTC+3
+- AI Agent: Codex
+- Objective / Purpose:
+  - Improved the Windows sync workflow so a missing `.venv` no longer leaves Karrar at a dead-end error after GitHub synchronization succeeds.
+  - Added an automatic setup handoff from `sync_github.sh` to `setup_venv.bat` when running under Windows Git Bash without a project Python environment.
+  - Preserved the safety rule that Windows launches must use the project virtual environment instead of accidentally starting the factory monitoring platform with an unsupported system Python.
+- Affected Files:
+  - `[MODIFIED]` `sync_github.sh`
+  - `[MODIFIED]` `logs.md`
+- Line Changes Breakdown:
+  - `sync_github.sh`: Lines 45-89 (Refactored Python detection into `detect_python`, added Windows Git Bash setup fallback through `setup_venv.bat`, and rechecked the virtual environment after setup).
+  - `logs.md`: Lines 324-340 (Added Log #012 entry documenting the automatic virtual environment setup flow).
+---
