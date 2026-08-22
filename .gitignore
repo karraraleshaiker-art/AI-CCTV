@@ -7,3 +7,16 @@ __pycache__/
 .venv/
 venv/
 env/
+
+# Model weights and engines
+*.pt
+*.pth
+*.onnx
+*.engine
+yolo11*.pt
+
+# OS & IDE metadata
+.DS_Store
+.vscode/
+.idea/
+*.log

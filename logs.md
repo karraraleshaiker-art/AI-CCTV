@@ -1,0 +1,109 @@
+# AI-CCTV Project Documentation & Changelog
+
+---
+
+# Section 1: Project Overview & Scope
+
+### 🏭 System Context: Solar Panel Manufacturing Facility
+The **AI-CCTV** system is an intelligent, automated computer vision and compliance monitoring platform designed specifically for the **Solar Panel Manufacturing Factory**. The facility operates approximately **40–45 high-resolution CCTV cameras** connected through an enterprise Network Video Recorder (**NVR**) infrastructure over the **RTSP** protocol.
+
+### 🎯 Primary Objectives
+1. **Automated Compliance & Safety Monitoring**: Detect critical workplace events in real-time without constant manual surveillance:
+   - **Workstation Absence**: Timed tracking of operator presence in designated manufacturing assembly stations.
+   - **Mobile Phone Usage**: Real-time detection of unauthorized smartphone interaction during active production cycles.
+   - **Restricted Area Breach**: Boundary and virtual tripwire enforcement for hazardous equipment zones.
+   - **Occupancy & Crowd Density**: Monitoring safe headcounts in sensitive production clusters.
+   - **Camera Stream Health**: Instant alerting upon RTSP feed disconnection or signal degradation.
+2. **Decoupled Low-Latency Architecture**: Overcoming RTSP streaming lag through independent multithreaded capture and AI inference loops (`LatestFrameCapture` single-frame drop strategy).
+3. **Human-in-the-Loop Verification**: AI identifies, prioritizes, and logs incidents with timestamped visual evidence, presenting them to authorized supervisors for final decision-making.
+
+### 👥 Core Project Team
+- **Ali Al-Khazali** (Co-Founder & Lead Engineer)
+- **Karrar Haider** (Co-Founder & Lead Engineer)
+
+---
+
+# Section 2: Purpose of `logs.md` & Logging Protocol
+
+### 📋 Purpose
+This document serves as the **Single Source of Truth (SSOT)** for all architectural decisions, code modifications, bug fixes, and feature additions across the project. Because development is conducted asynchronously by two collaborating engineers, strict logging prevents overlapping changes, resolves conflicts, and provides an auditable engineering trail.
+
+### 🤝 Collaborative Workflow Rules
+1. **Single-Session Isolation**: Ali and Karrar work in mutually exclusive sessions. When one developer is actively coding, the other does not perform changes to avoid code branching collisions.
+2. **Immediate GitHub Synchronization**: All changes must be committed and pushed immediately to the central repository: `https://github.com/karraraleshaiker-art/AI-CCTV`.
+3. **Pre-Session Connectivity Check**: Before launching any session, internet connectivity is strictly verified to ensure the latest upstream commits are pulled.
+4. **Mandatory Card Logging**: Every modification must be accompanied by a structured changelog entry card in **Section 3** below.
+
+### 📇 Standard Card Template
+Each changelog entry must strictly follow this structure:
+
+```markdown
+### 🏷️ [Log #ID] - <Short Summary of Change>
+- **Author**: <Ali Al-Khazali | Karrar Haider>
+- **Timestamp**: <YYYY-MM-DD HH:MM:SS Timezone>
+- **AI Agent**: <Antigravity | Codex | Other>
+- **Objective / Purpose**: <Detailed explanation of why this change was made>
+- **Affected Files**:
+  - `[ADDED | MODIFIED | DELETED]` <path/to/file>
+- **Line Changes Breakdown**:
+  - `<file>`: Lines X–Y <Description of line additions, modifications, or deletions>
+```
+
+---
+
+# Section 3: Chronological Changelog Entries
+
+---
+
+### 🏷️ [Log #001] - Initial Core Architecture Release (v0.4 Stable Core)
+- **Author**: Karrar Haider & Ali Al-Khazali
+- **Timestamp**: 2026-08-22 01:00:00 UTC+3
+- **AI Agent**: Antigravity
+- **Objective / Purpose**: 
+  - Established the foundational v0.4 Stable Core engine.
+  - Eliminated high-latency bottlenecks by implementing the `LatestFrameCapture` multithreaded single-frame queue strategy.
+  - Integrated YOLO11s object detection model with ByteTrack tracking for `person` (Class 0) and `cell phone` (Class 67).
+  - Built interactive CLI camera switching (`N`, `P`, `C`, `Q`) and live OpenCV video overlay.
+- **Affected Files**:
+  - `[ADDED]` `main.py`
+  - `[ADDED]` `settings.json`
+  - `[ADDED]` `run_ai_cctv.bat`
+  - `[ADDED]` `sync_github.sh`
+  - `[ADDED]` `README.txt`
+  - `[ADDED]` `.gitignore`
+- **Line Changes Breakdown**:
+  - `main.py`: Lines 1–197 (Created full implementation including `LatestFrameCapture`, `AIWorker`, `draw`, and `startup` routines).
+  - `settings.json`: Lines 1–12 (Defined NVR IP, RTSP port, confidence thresholds, image size, tracker configuration, and display resolution).
+  - `run_ai_cctv.bat`: Lines 1–20 (Batch execution script for Windows with TCP transport flag).
+  - `sync_github.sh`: Lines 1–24 (Initial GitHub pull/commit/push script).
+  - `README.txt`: Lines 1–41 (Documented v0.4 scope and testing criteria).
+  - `.gitignore`: Lines 1–10 (Basic Python virtual environment and cache ignores).
+
+---
+
+### 🏷️ [Log #002] - Factory Proposal Integration, Interactive Logs Reader & Multi-Platform Sync Automation
+- **Author**: Ali Al-Khazali
+- **Timestamp**: 2026-08-22 03:45:00 UTC+3
+- **AI Agent**: Antigravity
+- **Objective / Purpose**:
+  - Added the comprehensive Solar Panel Factory AI CCTV Monitoring Proposal (`AI_Assisted_CCTV_Monitoring_Proposal.docx`).
+  - Created the standardized English `logs.md` system tracking all modifications and establishing collaboration protocol between Ali and Karrar.
+  - Developed a standalone web-based `logs_reader.py` dashboard with live Markdown rendering, card search, and real-time auto-reload.
+  - Upgraded `sync_github.sh` (for Karrar / Linux / Windows Git Bash) with mandatory pre-flight internet connectivity verification, upstream sync, and auto-launching of both the Logs Reader and Main CCTV engine.
+  - Created `sync_github.command` (for Ali on macOS) with custom offline warnings, auto-sync, and app launcher.
+  - Enhanced `.gitignore` to prevent committing model weight files (`*.pt`, `*.onnx`), logs, and macOS/IDE metadata.
+- **Affected Files**:
+  - `[ADDED]` `AI_Assisted_CCTV_Monitoring_Proposal.docx`
+  - `[ADDED]` `logs.md`
+  - `[ADDED]` `logs_reader.py`
+  - `[ADDED]` `sync_github.command`
+  - `[MODIFIED]` `sync_github.sh`
+  - `[MODIFIED]` `.gitignore`
+- **Line Changes Breakdown**:
+  - `logs.md`: Lines 1–135 (Full project overview, collaboration framework, and changelog cards).
+  - `logs_reader.py`: Lines 1–230 (Built lightweight zero-dependency Python HTTP server and interactive Glassmorphism web UI).
+  - `sync_github.sh`: Lines 1–55 (Added internet check against `github.com` & `1.1.1.1`, warning alert for Ali, automatic pull, background Logs Reader launcher, and main app execution).
+  - `sync_github.command`: Lines 1–55 (Executable macOS launcher with partner-specific warning for Karrar, auto-sync, Logs Reader, and app startup).
+  - `.gitignore`: Lines 1–20 (Added ignore rules for `*.pt`, `*.onnx`, `*.engine`, `.DS_Store`, `.vscode/`, `.idea/`).
+
+---
