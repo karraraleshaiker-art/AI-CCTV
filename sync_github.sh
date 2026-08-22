@@ -2,9 +2,16 @@
 # AI-CCTV Synchronization & Launch Script (for Karrar / Linux & Git Bash)
 set -euo pipefail
 
-cd "$(dirname "$0")"
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
+cd "$SCRIPT_DIR"
 
 BRANCH="${1:-main}"
+
+if [ ! -d ".git" ]; then
+    echo "ERROR: This script must be run from inside the AI-CCTV Git repository."
+    echo "Current folder: $PWD"
+    exit 1
+fi
 
 echo "======================================================"
 echo "   AI-CCTV — Factory Monitoring System Sync (Karrar)"
@@ -35,16 +42,36 @@ git pull --rebase --autostash origin "$BRANCH"
 echo "[OK] Repository is up to date."
 echo ""
 
-# Detect Python binary
-PYTHON_CMD="python3"
+# Detect Python binary. Prefer the project venv so Windows does not accidentally
+# launch an unsupported system Python.
+PYTHON_CMD=""
+IS_WINDOWS_BASH=0
+case "$(uname -s 2>/dev/null || echo unknown)" in
+    MINGW*|MSYS*|CYGWIN*) IS_WINDOWS_BASH=1 ;;
+esac
+
 if [ -f ".venv/bin/python" ]; then
-    PYTHON_CMD=".venv/bin/python"
+    PYTHON_CMD="./.venv/bin/python"
 elif [ -f ".venv/Scripts/python.exe" ]; then
-    PYTHON_CMD=".venv/Scripts/python.exe"
+    PYTHON_CMD="./.venv/Scripts/python.exe"
+elif [ -f "venv/bin/python" ]; then
+    PYTHON_CMD="./venv/bin/python"
+elif [ -f "venv/Scripts/python.exe" ]; then
+    PYTHON_CMD="./venv/Scripts/python.exe"
+elif [ "$IS_WINDOWS_BASH" -eq 1 ]; then
+    echo "ERROR: .venv was not found."
+    echo "Run setup_venv.bat first, then run sync_github.bat again."
+    exit 1
 elif command -v python3 >/dev/null 2>&1; then
     PYTHON_CMD="python3"
 elif command -v python >/dev/null 2>&1; then
     PYTHON_CMD="python"
+fi
+
+if [ -z "$PYTHON_CMD" ]; then
+    echo "ERROR: Python was not found."
+    echo "Run setup_venv.bat on Windows, or create a venv and install requirements-web.txt."
+    exit 1
 fi
 
 # Step 3: Launch Logs Reader (port 8808) in its own independent browser window

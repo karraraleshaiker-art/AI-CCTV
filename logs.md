@@ -301,3 +301,22 @@ Each changelog entry must strictly follow this structure:
   - `sync_github.sh`: Lines 20–55 (Replaced terminal emojis with standard bracketed tags).
 
 ---
+
+---
+  [Log #011] - Windows Git Bash Sync Launcher and Environment Guard
+- Author: Karrar Haider
+- Timestamp: 2026-08-22 15:46:09 UTC+3
+- AI Agent: Codex
+- Objective / Purpose:
+  - Fixed the Windows sync workflow by adding a double-clickable launcher that explicitly runs the repository shell script through Git Bash instead of the blocked WSL bash executable.
+  - Hardened `sync_github.sh` so it resolves its own repository directory reliably and reports clear errors when the Git checkout or Python environment is missing.
+  - Protected the factory monitoring startup path from accidentally using an unsupported system Python by requiring the project `.venv` when the script is run from Windows Git Bash.
+- Affected Files:
+  - `[ADDED]` `sync_github.bat`
+  - `[MODIFIED]` `sync_github.sh`
+  - `[MODIFIED]` `logs.md`
+- Line Changes Breakdown:
+  - `sync_github.bat`: Lines 1-25 (Added Windows launcher that locates Git Bash, runs `sync_github.sh`, preserves the exit code, and keeps the console visible on failure).
+  - `sync_github.sh`: Lines 5-75 (Added robust script directory resolution, Git repository validation, Windows Git Bash detection, venv preference, and clearer Python setup errors).
+  - `logs.md`: Lines 305-324 (Added Log #011 entry documenting the sync launcher repair and environment guard).
+---
