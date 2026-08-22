@@ -4,10 +4,10 @@
 
 # Section 1: Project Overview & Scope
 
-### 🏭 System Context: Solar Panel Manufacturing Facility
+### System Context: Solar Panel Manufacturing Facility
 The **AI-CCTV** system is an intelligent, automated computer vision and compliance monitoring platform designed specifically for the **Solar Panel Manufacturing Factory**. The facility operates approximately **40–45 high-resolution CCTV cameras** connected through an enterprise Network Video Recorder (**NVR**) infrastructure over the **RTSP** protocol.
 
-### 🎯 Primary Objectives
+### Primary Objectives
 1. **Automated Compliance & Safety Monitoring**: Detect critical workplace events in real-time without constant manual surveillance:
    - **Workstation Absence**: Timed tracking of operator presence in designated manufacturing assembly stations.
    - **Mobile Phone Usage**: Real-time detection of unauthorized smartphone interaction during active production cycles.
@@ -17,7 +17,7 @@ The **AI-CCTV** system is an intelligent, automated computer vision and complian
 2. **Decoupled Low-Latency Architecture**: Overcoming RTSP streaming lag through independent multithreaded capture and AI inference loops (`LatestFrameCapture` single-frame drop strategy).
 3. **Human-in-the-Loop Verification**: AI identifies, prioritizes, and logs incidents with timestamped visual evidence, presenting them to authorized supervisors for final decision-making.
 
-### 👥 Core Project Team
+### Core Project Team
 - **Ali Nasser** (Co-Founder & Lead Engineer)
 - **Karrar Haider** (Co-Founder & Lead Engineer)
 
@@ -25,20 +25,20 @@ The **AI-CCTV** system is an intelligent, automated computer vision and complian
 
 # Section 2: Purpose of `logs.md` & Logging Protocol
 
-### 📋 Purpose
+### Purpose
 This document serves as the **Single Source of Truth (SSOT)** for all architectural decisions, code modifications, bug fixes, and feature additions across the project. Because development is conducted asynchronously by two collaborating engineers, strict logging prevents overlapping changes, resolves conflicts, and provides an auditable engineering trail.
 
-### 🤝 Collaborative Workflow Rules
+### Collaborative Workflow Rules
 1. **Single-Session Isolation**: Ali and Karrar work in mutually exclusive sessions. When one developer is actively coding, the other does not perform changes to avoid code branching collisions.
 2. **Immediate GitHub Synchronization**: All changes must be committed and pushed immediately to the central repository: `https://github.com/karraraleshaiker-art/AI-CCTV`.
 3. **Pre-Session Connectivity Check**: Before launching any session, internet connectivity is strictly verified to ensure the latest upstream commits are pulled.
 4. **Mandatory Card Logging**: Every modification must be accompanied by a structured changelog entry card in **Section 3** below.
 
-### 📇 Standard Card Template
+### Standard Card Template
 Each changelog entry must strictly follow this structure:
 
 ```markdown
-### 🏷️ [Log #ID] - <Short Summary of Change>
+### [Log #ID] - <Short Summary of Change>
 - **Author**: <Ali Nasser | Karrar Haider>
 - **Timestamp**: <YYYY-MM-DD HH:MM:SS Timezone>
 - **AI Agent**: <Antigravity | Codex | Other>
@@ -55,7 +55,7 @@ Each changelog entry must strictly follow this structure:
 
 ---
 
-### 🏷️ [Log #001] - Initial Core Architecture Release (v0.4 Stable Core)
+### [Log #001] - Initial Core Architecture Release (v0.4 Stable Core)
 - **Author**: Karrar Haider & Ali Nasser
 - **Timestamp**: 2026-08-22 01:00:00 UTC+3
 - **AI Agent**: Antigravity
@@ -81,7 +81,7 @@ Each changelog entry must strictly follow this structure:
 
 ---
 
-### 🏷️ [Log #002] - Factory Proposal Integration, Interactive Logs Reader & Multi-Platform Sync Automation
+### [Log #002] - Factory Proposal Integration, Interactive Logs Reader & Multi-Platform Sync Automation
 - **Author**: Ali Nasser
 - **Timestamp**: 2026-08-22 03:45:00 UTC+3
 - **AI Agent**: Antigravity
@@ -108,7 +108,7 @@ Each changelog entry must strictly follow this structure:
 
 ---
 
-### 🏷️ [Log #003] - FastAPI Web Vision Platform, Factory Logo Integration, Interactive Zone Drawer & Launcher Separation
+### [Log #003] - FastAPI Web Vision Platform, Factory Logo Integration, Interactive Zone Drawer & Launcher Separation
 - **Author**: Ali Nasser
 - **Timestamp**: 2026-08-22 04:05:00 UTC+3
 - **AI Agent**: Antigravity
@@ -138,7 +138,7 @@ Each changelog entry must strictly follow this structure:
 
 ---
 
-### 🏷️ [Log #004] - Independent Dual-Process Launcher, Navbar Cleanup & FastAPI Lifespan Handler Migration
+### [Log #004] - Independent Dual-Process Launcher, Navbar Cleanup & FastAPI Lifespan Handler Migration
 - **Author**: Ali Nasser
 - **Timestamp**: 2026-08-22 10:00:00 UTC+3
 - **AI Agent**: Antigravity
@@ -163,7 +163,7 @@ Each changelog entry must strictly follow this structure:
 
 ---
 
-### 🏷️ [Log #005] - SQLAlchemy Async ORM & SQLite WAL Database Architecture Integration
+### [Log #005] - SQLAlchemy Async ORM & SQLite WAL Database Architecture Integration
 - **Author**: Ali Nasser
 - **Timestamp**: 2026-08-22 10:10:00 UTC+3
 - **AI Agent**: Antigravity
@@ -189,7 +189,7 @@ Each changelog entry must strictly follow this structure:
 
 ---
 
-### 🏷️ [Log #006] - Biometric Facial Recognition Engine, Employee Directory & Keyframe Track-Fusion
+### [Log #006] - Biometric Facial Recognition Engine, Employee Directory & Keyframe Track-Fusion
 - **Author**: Ali Nasser
 - **Timestamp**: 2026-08-22 10:20:00 UTC+3
 - **AI Agent**: Antigravity
@@ -199,7 +199,7 @@ Each changelog entry must strictly follow this structure:
   - Added `EmployeeModel` and `AttendanceLogModel` to `models.py` with binary storage of 128-D L2-normalized biometric face embeddings.
   - Created asynchronous employee CRUD and in-memory vector roster matching in `database.py`.
   - Built complete **Employee Management Module & Enrollment Modal** in the Web Dashboard (`app.py`), supporting photo upload, real-time face landmark verification, and worker directory management.
-  - Rendered recognized worker badges (`👤 Name (Code) | Conf`) in bright gold/cyan directly on the live camera stream overlay.
+  - Rendered recognized worker badges (` Name (Code) | Conf`) in bright gold/cyan directly on the live camera stream overlay.
 - **Affected Files**:
   - `[ADDED]` `face_engine.py`
   - `[MODIFIED]` `models.py`
@@ -215,7 +215,7 @@ Each changelog entry must strictly follow this structure:
 
 ---
 
-### 🏷️ [Log #007] - Logs Reader Multi-Line Markdown Parser & UI Card Scope Rendering Fix
+### [Log #007] - Logs Reader Multi-Line Markdown Parser & UI Card Scope Rendering Fix
 - **Author**: Ali Nasser
 - **Timestamp**: 2026-08-22 10:25:00 UTC+3
 - **AI Agent**: Antigravity
@@ -233,7 +233,7 @@ Each changelog entry must strictly follow this structure:
 
 ---
 
-### 🏷️ [Log #008] - Non-Blocking Fast Socket Probe & OpenCV RTSP Timeout Suppression
+### [Log #008] - Non-Blocking Fast Socket Probe & OpenCV RTSP Timeout Suppression
 - **Author**: Ali Nasser
 - **Timestamp**: 2026-08-22 10:40:00 UTC+3
 - **AI Agent**: Antigravity
@@ -248,5 +248,29 @@ Each changelog entry must strictly follow this structure:
 - **Line Changes Breakdown**:
   - `app.py`: Lines 15–30 (Added socket import and OpenCV log suppression), Lines 170–300 (Added is_nvr_online helper and modernized CameraStream capture loop).
   - `logs.md`: Lines 235–260 (Added Log #008 entry).
+
+---
+
+### [Log #009] - Complete Removal of Emojis & Clean Professional UI Standard
+- **Author**: Ali Nasser
+- **Timestamp**: 2026-08-22 10:45:00 UTC+3
+- **AI Agent**: Antigravity
+- **Objective / Purpose**:
+  - Removed all emojis across the entire repository to establish a clean, professional, enterprise-grade engineering aesthetic.
+  - Replaced UI icons, status indicators, and modal action tags in `app.py` and `logs_reader.py` with standard typography, CSS badges, and text labels.
+  - Updated launcher scripts (`sync_github.command`, `sync_github.sh`) to use clean terminal status outputs ([OK], [WARNING]).
+  - Cleaned all historical and active changelog card headers in `logs.md`.
+- **Affected Files**:
+  - `[MODIFIED]` `logs.md`
+  - `[MODIFIED]` `logs_reader.py`
+  - `[MODIFIED]` `app.py`
+  - `[MODIFIED]` `sync_github.command`
+  - `[MODIFIED]` `sync_github.sh`
+- **Line Changes Breakdown**:
+  - `logs.md`: Lines 1–260 (Stripped emoji prefixes from sections, headers, and metadata cards).
+  - `logs_reader.py`: Lines 520–720 (Replaced emoji icons with clean badges and typography).
+  - `app.py`: Lines 450–520, 1400–1650 (Cleaned alert messages, modal action buttons, and detection overlays).
+  - `sync_github.command`: Lines 20–55 (Replaced terminal emojis with standard bracketed tags).
+  - `sync_github.sh`: Lines 20–55 (Replaced terminal emojis with standard bracketed tags).
 
 ---

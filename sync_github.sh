@@ -18,21 +18,21 @@ if ! curl -s --head --connect-timeout 4 https://github.com >/dev/null 2>&1 && \
    ! curl -s --head --connect-timeout 4 https://www.google.com >/dev/null 2>&1; then
     echo ""
     echo "======================================================================"
-    echo " ⚠️  WARNING:"
+    echo " [WARNING]"
     echo " You must be connected to the internet to prevent code conflicts"
     echo " with your partner Ali."
     echo "======================================================================"
     echo ""
     exit 1
 fi
-echo "✓ Internet connection verified."
+echo "[OK] Internet connection verified."
 echo ""
 
 # Step 2: GitHub Synchronization
 echo "[2/4] Syncing with origin/${BRANCH}..."
 git fetch origin
 git pull --rebase --autostash origin "$BRANCH"
-echo "✓ Repository is up to date."
+echo "[OK] Repository is up to date."
 echo ""
 
 # Detect Python binary
@@ -51,7 +51,7 @@ fi
 echo "[3/4] Starting Logs Reader on http://127.0.0.1:8808 ..."
 $PYTHON_CMD logs_reader.py >/dev/null 2>&1 &
 LOGS_PID=$!
-echo "✓ Logs Reader started (PID: $LOGS_PID)."
+echo "[OK] Logs Reader started (PID: $LOGS_PID)."
 echo ""
 
 # Trap cleanup to terminate background logs_reader when main app closes

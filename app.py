@@ -540,7 +540,7 @@ class MultiCameraAIProcessor:
 
                 if emp_name:
                     color = (255, 215, 0) # Cyan/Gold for identified employee
-                    label = f"👤 {emp_name} ({emp_code}) | {cf:.2f}"
+                    label = f"{emp_name} ({emp_code}) | {cf:.2f}"
                 else:
                     color = COLOR_GREEN
                     label = f"Worker {tid if tid >= 0 else ''} | {cf:.2f}"
@@ -584,7 +584,7 @@ class MultiCameraAIProcessor:
                         elapsed_absence = now - last_seen
                         if elapsed_absence > absence_threshold:
                             zone_color = COLOR_RED
-                            status_text = f"⚠️ ABSENCE ALERT: {z_name} vacant for {int(elapsed_absence)}s"
+                            status_text = f"[ABSENCE ALERT]: {z_name} vacant for {int(elapsed_absence)}s"
                             # Trigger incident
                             add_incident(Incident(
                                 incident_id=f"INC-{cam_id}-{int(now)}",
@@ -602,7 +602,7 @@ class MultiCameraAIProcessor:
                 elif z_type == "restricted":
                     if workers_in_zone > 0:
                         zone_color = COLOR_RED
-                        status_text = f"🚫 RESTRICTED BREACH: {workers_in_zone} person(s) inside {z_name}!"
+                        status_text = f" RESTRICTED BREACH: {workers_in_zone} person(s) inside {z_name}!"
                         add_incident(Incident(
                             incident_id=f"INC-BREACH-{cam_id}-{int(now)}",
                             cam_id=cam_id,
@@ -1329,7 +1329,7 @@ DASHBOARD_HTML = r"""<!DOCTYPE html>
                 <span class="dot-pulse"></span> NVR Online (192.168.100.203)
             </span>
             <button class="btn btn-cyan" onclick="openEmployeesModal()">
-                👥 Employees (إدارة الموظفين)
+                Employees (إدارة الموظفين)
             </button>
         </div>
     </header>
@@ -1362,7 +1362,7 @@ DASHBOARD_HTML = r"""<!DOCTYPE html>
             <!-- Cameras Multi-Stream View -->
             <div class="cameras-section">
                 <div class="section-header">
-                    <span style="font-weight: 700; font-size: 1rem;">📹 Live Multi-Camera Stream (Pilot Phase 1)</span>
+                    <span style="font-weight: 700; font-size: 1rem;">Live Multi-Camera Stream (Pilot Phase 1)</span>
                     <div style="display: flex; gap: 0.5rem;">
                         <button class="btn" onclick="promptAddCamera()">+ Add Camera</button>
                     </div>
@@ -1377,20 +1377,20 @@ DASHBOARD_HTML = r"""<!DOCTYPE html>
             <div class="sidebar">
                 <div class="panel-card">
                     <div class="panel-title">
-                        <span>🚨 Live Safety & Rules Alerts</span>
+                        <span> Live Safety & Rules Alerts</span>
                         <span style="font-size: 0.75rem; color: var(--text-muted);" id="incidentCountLabel">0 pending</span>
                     </div>
 
                     <div class="incidents-list" id="incidentsContainer">
                         <div style="text-align: center; color: var(--text-muted); padding: 2rem 0; font-size: 0.85rem;">
-                            ✅ All monitored zones normal. No violations detected.
+                             All monitored zones normal. No violations detected.
                         </div>
                     </div>
                 </div>
 
                 <div class="panel-card">
                     <div class="panel-title">
-                        <span>⚙️ Quick AI Configuration</span>
+                        <span> Quick AI Configuration</span>
                     </div>
                     <div style="display: flex; flex-direction: column; gap: 0.8rem; font-size: 0.82rem;">
                         <div>
@@ -1422,8 +1422,8 @@ DASHBOARD_HTML = r"""<!DOCTYPE html>
     <div class="modal-overlay" id="zoneModal">
         <div class="modal-card">
             <div style="display: flex; justify-content: space-between; align-items: center;">
-                <h3 id="modalCamTitle">✏️ Draw Polygonal Zone (Camera D14)</h3>
-                <button class="btn" onclick="closeZoneModal()">✕ Close</button>
+                <h3 id="modalCamTitle"> Draw Polygonal Zone (Camera D14)</h3>
+                <button class="btn" onclick="closeZoneModal()">Close</button>
             </div>
             <p style="font-size: 0.82rem; color: var(--text-muted);">
                 Click on the camera image below to place vertices. Select the zone type and click Save.
@@ -1438,14 +1438,14 @@ DASHBOARD_HTML = r"""<!DOCTYPE html>
                     <label style="font-size: 0.82rem;">Zone Type:</label>
                     <select id="zoneTypeSelect" class="btn">
                         <option value="workstation">🟢 Workstation Zone (محطة عمل)</option>
-                        <option value="restricted">🔴 Restricted Area (منطقة محظورة)</option>
+                        <option value="restricted"> Restricted Area (منطقة محظورة)</option>
                     </select>
                     <input type="text" id="zoneNameInput" class="btn" placeholder="Zone Name (e.g. Soldering Station 1)" style="width: 240px;">
                 </div>
 
                 <div style="display: flex; gap: 0.5rem;">
-                    <button class="btn" onclick="clearDrawnPoints()">🗑️ Clear Points</button>
-                    <button class="btn btn-cyan" onclick="saveDrawnZone()">💾 Save Zone</button>
+                    <button class="btn" onclick="clearDrawnPoints()">Delete Clear Points</button>
+                    <button class="btn btn-cyan" onclick="saveDrawnZone()">Save Zone</button>
                 </div>
             </div>
         </div>
@@ -1456,14 +1456,14 @@ DASHBOARD_HTML = r"""<!DOCTYPE html>
         <div class="modal-card" style="max-width: 960px; max-height: 90vh; overflow-y: auto;">
             <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 0.8rem;">
                 <h3 style="display: flex; align-items: center; gap: 0.5rem;">
-                    👥 Employee Directory & Biometrics (دليل الموظفين والبصمات)
+                    Employee Directory & Biometrics (دليل الموظفين والبصمات)
                 </h3>
-                <button class="btn" onclick="closeEmployeesModal()">✕ Close</button>
+                <button class="btn" onclick="closeEmployeesModal()">Close</button>
             </div>
 
             <!-- Enrollment Form -->
             <div style="background: rgba(0, 0, 0, 0.35); border: 1px solid var(--border); border-radius: 8px; padding: 1.2rem; display: flex; flex-direction: column; gap: 1rem;">
-                <h4 style="color: var(--cyan); font-size: 0.92rem;">➕ Enroll New Worker with Biometric Face (تسجيل عامل جديد)</h4>
+                <h4 style="color: var(--cyan); font-size: 0.92rem;">Enroll New Worker with Biometric Face (تسجيل عامل جديد)</h4>
                 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
                     <div>
                         <label style="font-size: 0.75rem; color: var(--text-muted);">Full Name (الاسم الكامل):</label>
@@ -1490,14 +1490,14 @@ DASHBOARD_HTML = r"""<!DOCTYPE html>
                 <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 0.8rem;">
                     <div style="display: flex; align-items: center; gap: 0.8rem;">
                         <label class="btn" style="cursor: pointer; background: rgba(59, 130, 246, 0.2); border-color: var(--blue);">
-                            📷 Select Face Photo...
+                            Select Face Photo...
                             <input type="file" id="empPhotoFile" accept="image/*" style="display: none;" onchange="handlePhotoSelect(this)">
                         </label>
                         <span id="photoFileName" style="font-size: 0.8rem; color: var(--text-muted);">No image chosen</span>
                     </div>
 
                     <button class="btn btn-cyan" onclick="submitEmployeeEnrollment()">
-                        💾 Extract Biometrics & Save Worker
+                        Extract Biometrics & Save Worker
                     </button>
                 </div>
                 <div id="enrollStatusMsg" style="font-size: 0.82rem; display: none;"></div>
@@ -1505,7 +1505,7 @@ DASHBOARD_HTML = r"""<!DOCTYPE html>
 
             <!-- Existing Employees Roster Table -->
             <div style="display: flex; flex-direction: column; gap: 0.6rem;">
-                <h4 style="font-size: 0.92rem; color: #fff;">📋 Registered Factory Workforce (<span id="empCountHeader">0</span>)</h4>
+                <h4 style="font-size: 0.92rem; color: #fff;">Registered Factory Workforce (<span id="empCountHeader">0</span>)</h4>
                 <div id="employeesListContainer" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 0.8rem; max-height: 320px; overflow-y: auto;">
                     <!-- Cards will be populated dynamically -->
                 </div>
@@ -1561,7 +1561,7 @@ DASHBOARD_HTML = r"""<!DOCTYPE html>
                                 <div style="font-size: 0.72rem; color: var(--text-muted);">${emp.assigned_zone_id ? 'Station: ' + escapeHtml(emp.assigned_zone_id) : 'All Stations'}</div>
                             </div>
                         </div>
-                        <button class="btn" style="color: var(--red); padding: 0.3rem 0.6rem; font-size: 0.75rem;" onclick="deleteEmployee(${emp.id})">🗑️</button>
+                        <button class="btn" style="color: var(--red); padding: 0.3rem 0.6rem; font-size: 0.75rem;" onclick="deleteEmployee(${emp.id})">Delete</button>
                     </div>
                 `).join('');
             } catch (err) {
@@ -1587,7 +1587,7 @@ DASHBOARD_HTML = r"""<!DOCTYPE html>
 
             msgBox.style.display = 'block';
             msgBox.style.color = 'var(--cyan)';
-            msgBox.textContent = "⏳ Extracting biometric facial embedding and saving profile...";
+            msgBox.textContent = "Extracting biometric facial embedding and saving profile...";
 
             try {
                 const res = await fetch('/api/employees/enroll', {
@@ -1605,7 +1605,7 @@ DASHBOARD_HTML = r"""<!DOCTYPE html>
                 const data = await res.json();
                 if (res.ok) {
                     msgBox.style.color = 'var(--green)';
-                    msgBox.textContent = `✅ Successfully enrolled ${name} with biometric face recognition!`;
+                    msgBox.textContent = `Successfully enrolled ${name} with biometric face recognition!`;
                     document.getElementById('empNameInput').value = '';
                     document.getElementById('empCodeInput').value = '';
                     document.getElementById('photoFileName').textContent = 'No image chosen';
@@ -1613,11 +1613,11 @@ DASHBOARD_HTML = r"""<!DOCTYPE html>
                     fetchEmployees();
                 } else {
                     msgBox.style.color = 'var(--red)';
-                    msgBox.textContent = `❌ Enrollment Error: ${data.detail || 'Failed'}`;
+                    msgBox.textContent = `Enrollment Error: ${data.detail || 'Failed'}`;
                 }
             } catch (err) {
                 msgBox.style.color = 'var(--red)';
-                msgBox.textContent = `❌ Network Error: ${err.message}`;
+                msgBox.textContent = `Network Error: ${err.message}`;
             }
         }
 
@@ -1674,14 +1674,14 @@ DASHBOARD_HTML = r"""<!DOCTYPE html>
 
                     <div class="cam-controls-bar">
                         <button class="btn" style="font-size: 0.75rem;" onclick="openZoneModal(${c.cam_id})">
-                            ✏️ Edit Zones
+                             Edit Zones
                         </button>
                         <div style="display: flex; gap: 0.4rem;">
                             <button class="btn" style="font-size: 0.75rem;" onclick="switchStreamType(${c.cam_id}, '${c.suffix === '01' ? '02' : '01'}')">
-                                🔄 ${c.suffix === '01' ? 'Switch Sub' : 'Switch Main'}
+                                 ${c.suffix === '01' ? 'Switch Sub' : 'Switch Main'}
                             </button>
                             <button class="btn" style="font-size: 0.75rem; color: var(--red);" onclick="removeCam(${c.cam_id})">
-                                ✕
+                                
                             </button>
                         </div>
                     </div>
@@ -1699,7 +1699,7 @@ DASHBOARD_HTML = r"""<!DOCTYPE html>
                 document.getElementById('incidentCountLabel').textContent = `${pending.length} pending`;
 
                 if (list.length === 0) {
-                    container.innerHTML = `<div style="text-align: center; color: var(--text-muted); padding: 2rem 0; font-size: 0.85rem;">✅ All monitored zones normal. No violations.</div>`;
+                    container.innerHTML = `<div style="text-align: center; color: var(--text-muted); padding: 2rem 0; font-size: 0.85rem;"> All monitored zones normal. No violations.</div>`;
                     return;
                 }
 
@@ -1718,12 +1718,12 @@ DASHBOARD_HTML = r"""<!DOCTYPE html>
                             <div class="inc-details">${escapeHtml(inc.details)}</div>
                             ${inc.status === 'pending' ? `
                                 <div class="inc-actions">
-                                    <button class="btn-verify" onclick="reviewIncident('${inc.id}', 'verified')">✓ Verify (تأكيد)</button>
-                                    <button class="btn-dismiss" onclick="reviewIncident('${inc.id}', 'dismissed')">✗ False Alarm</button>
+                                    <button class="btn-verify" onclick="reviewIncident('${inc.id}', 'verified')">Verify (تأكيد)</button>
+                                    <button class="btn-dismiss" onclick="reviewIncident('${inc.id}', 'dismissed')"> False Alarm</button>
                                 </div>
                             ` : `
                                 <div style="font-size: 0.72rem; color: ${inc.status === 'verified' ? '#34d399' : '#94a3b8'}; margin-top: 0.2rem;">
-                                    ${inc.status === 'verified' ? '✓ Verified Incident' : '✗ Dismissed (False Alarm)'}
+                                    ${inc.status === 'verified' ? ' Verified Incident' : 'Dismissed (False Alarm)'}
                                 </div>
                             `}
                         </div>
@@ -1782,7 +1782,7 @@ DASHBOARD_HTML = r"""<!DOCTYPE html>
         function openZoneModal(camId) {
             currentEditingCam = camId;
             drawnPoints = [];
-            document.getElementById('modalCamTitle').textContent = `✏️ Draw Polygonal Zone (Camera D${camId})`;
+            document.getElementById('modalCamTitle').textContent = ` Draw Polygonal Zone (Camera D${camId})`;
             document.getElementById('zoneModal').style.display = 'flex';
             
             const canvas = document.getElementById('zoneCanvas');
@@ -1868,7 +1868,7 @@ DASHBOARD_HTML = r"""<!DOCTYPE html>
                 body: JSON.stringify(curZones)
             });
 
-            alert(`✅ Zone "${zName}" saved successfully!`);
+            alert(`Zone "${zName}" saved successfully!`);
             closeZoneModal();
         }
 
