@@ -15,6 +15,14 @@ env/
 *.engine
 yolo11*.pt
 
+# Database runtime files
+*.db
+*.db-wal
+*.db-shm
+*.db-journal
+*.sqlite
+*.sqlite3
+
 # OS & IDE metadata
 .DS_Store
 .vscode/

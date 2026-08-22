@@ -95,6 +95,15 @@ def get_best_device() -> str:
 ACTIVE_DEVICE = get_best_device()
 print(f"[SYSTEM] Hardware Acceleration Device Selected: {ACTIVE_DEVICE.upper()}")
 
+from database import (
+    init_db,
+    db_save_incident,
+    db_get_incidents,
+    db_update_incident_review,
+    db_get_zones_for_cam,
+    db_save_zones_for_cam,
+)
+
 # ---------------------------------------------------------------------------
 # Incident & Rules Management
 # ---------------------------------------------------------------------------
@@ -137,6 +146,15 @@ def add_incident(incident: Incident):
         INCIDENTS.append(incident)
         if len(INCIDENTS) > 100:
             INCIDENTS.pop(0)
+
+    # Persist into SQLite asynchronously
+    def _save_bg():
+        try:
+            asyncio.run(db_save_incident(incident.to_dict()))
+        except Exception as err:
+            print(f"[DB ERROR] Saving incident: {err}")
+
+    threading.Thread(target=_save_bg, daemon=True).start()
 
 # ---------------------------------------------------------------------------
 # Camera RTSP Stream Worker
@@ -574,6 +592,11 @@ AI_ENGINE = MultiCameraAIProcessor()
 # ---------------------------------------------------------------------------
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    # Initialize SQLite Database & seed defaults
+    try:
+        await init_db(SETTINGS)
+    except Exception as e:
+        print(f"[DB INIT ERROR] {e}")
     AI_ENGINE.start()
     yield
     AI_ENGINE.stop()
@@ -671,39 +694,71 @@ def update_settings(new_s: dict):
     save_settings(SETTINGS)
     return {"status": "ok", "settings": SETTINGS}
 
-# --- Zones Management ---
+# --- Zones Management (SQLite Persistent) ---
 class ZonePayload(BaseModel):
     cam_id: int
     zones: list
 
 @app.get("/api/zones/{cam_id}")
-def get_zones(cam_id: int):
+async def get_zones(cam_id: int):
+    try:
+        zones = await db_get_zones_for_cam(cam_id)
+        if zones:
+            return zones
+    except Exception as e:
+        print(f"[DB GET ZONES] {e}")
     return SETTINGS.get("zones", {}).get(str(cam_id), [])
 
 @app.post("/api/zones/{cam_id}")
-def save_zones(cam_id: int, payload: list):
+async def save_zones(cam_id: int, payload: list):
+    try:
+        await db_save_zones_for_cam(cam_id, payload)
+    except Exception as e:
+        print(f"[DB SAVE ZONES] {e}")
     if "zones" not in SETTINGS:
         SETTINGS["zones"] = {}
     SETTINGS["zones"][str(cam_id)] = payload
     save_settings(SETTINGS)
     return {"status": "ok", "zones": payload}
 
-# --- Incidents & Review ---
+# --- Incidents & Review (SQLite Persistent) ---
 @app.get("/api/incidents")
-def get_incidents():
+async def get_incidents():
+    try:
+        db_incs = await db_get_incidents(limit=50)
+        if db_incs:
+            return db_incs
+    except Exception as e:
+        print(f"[DB GET INCIDENTS] {e}")
     with INCIDENTS_LOCK:
         return [i.to_dict() for i in reversed(INCIDENTS)]
 
 class IncidentActionReq(BaseModel):
     action: str  # verified or dismissed
+    reviewer: Optional[str] = "Supervisor"
+    notes: Optional[str] = ""
 
 @app.post("/api/incidents/{incident_id}/action")
-def review_incident(incident_id: str, req: IncidentActionReq):
+async def review_incident(incident_id: str, req: IncidentActionReq):
+    try:
+        updated = await db_update_incident_review(
+            incident_id=incident_id,
+            action=req.action,
+            reviewer=req.reviewer or "Supervisor",
+            notes=req.notes or ""
+        )
+    except Exception as e:
+        print(f"[DB REVIEW] {e}")
+        updated = None
+
     with INCIDENTS_LOCK:
         for inc in INCIDENTS:
             if inc.id == incident_id:
                 inc.status = req.action
                 return {"status": "ok", "incident": inc.to_dict()}
+
+    if updated:
+        return {"status": "ok", "incident": updated}
     raise HTTPException(status_code=404, detail="Incident not found")
 
 # ---------------------------------------------------------------------------

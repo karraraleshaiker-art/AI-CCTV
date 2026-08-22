@@ -162,3 +162,29 @@ Each changelog entry must strictly follow this structure:
   - `logs.md`: Lines 140–175 (Added Log #004 entry).
 
 ---
+
+### 🏷️ [Log #005] - SQLAlchemy Async ORM & SQLite WAL Database Architecture Integration
+- **Author**: Ali Al-Khazali
+- **Timestamp**: 2026-08-22 10:10:00 UTC+3
+- **AI Agent**: Antigravity
+- **Objective / Purpose**:
+  - Integrated enterprise-grade asynchronous database layer using **SQLAlchemy 2.0 Async ORM** and **SQLite with Write-Ahead Logging (WAL)**.
+  - Implemented high-concurrency database pragmas (`PRAGMA journal_mode=WAL;`, `PRAGMA synchronous=NORMAL;`, `PRAGMA foreign_keys=ON;`) ensuring non-blocking reads and writes.
+  - Created declarative database models (`models.py`) for Cameras (`CameraModel`), Zones (`ZoneModel`), Incidents (`IncidentModel`), and Audit Logs (`AuditLogModel`).
+  - Built automatic database migration, schema initialization, and initial seeding routines from `settings.json` on startup (`database.py`).
+  - Connected database persistence into `app.py` for real-time safety incident recording, supervisor review verification decisions (`verified` / `dismissed`), and zone polygon coordinates.
+  - Updated `.gitignore` to exclude SQLite runtime database files (`*.db`, `*.db-wal`, `*.db-shm`).
+- **Affected Files**:
+  - `[ADDED]` `models.py`
+  - `[ADDED]` `database.py`
+  - `[MODIFIED]` `app.py`
+  - `[MODIFIED]` `.gitignore`
+  - `[MODIFIED]` `logs.md`
+- **Line Changes Breakdown**:
+  - `models.py`: Lines 1–135 (Defined CameraModel, ZoneModel, IncidentModel, and AuditLogModel).
+  - `database.py`: Lines 1–185 (Created Async SQLAlchemy engine, SQLite WAL listener, session generator, and CRUD service).
+  - `app.py`: Lines 95–150 (Integrated async incident saver), Lines 590–740 (Connected DB init to lifespan and updated incident/zone endpoints).
+  - `.gitignore`: Lines 15–25 (Added ignore patterns for SQLite database files).
+  - `logs.md`: Lines 165–200 (Added Log #005 entry).
+
+---
