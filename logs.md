@@ -137,3 +137,28 @@ Each changelog entry must strictly follow this structure:
   - `logs.md`: Lines 110–148 (Added Log #003 entry).
 
 ---
+
+### 🏷️ [Log #004] - Independent Dual-Process Launcher, Navbar Cleanup & FastAPI Lifespan Handler Migration
+- **Author**: Ali Al-Khazali
+- **Timestamp**: 2026-08-22 10:00:00 UTC+3
+- **AI Agent**: Antigravity
+- **Objective / Purpose**:
+  - Re-architected `sync_github.command` (macOS) and `sync_github.sh` (Linux/Git Bash) to launch both **Logs Reader** (port 8808) and **AI CCTV Platform** (port 8000) as separate independent background/foreground processes.
+  - Enabled automatic opening of each service in its own dedicated web browser window/tab upon launch.
+  - Implemented shell cleanup trap handlers (`EXIT`, `INT`, `TERM`) to gracefully terminate all background processes upon closing the terminal.
+  - Removed the `Logs Reader` and `GitHub Repo` navigation buttons from the dashboard top navbar as requested.
+  - Modernized FastAPI lifecycle handlers by migrating deprecated `@app.on_event("startup/shutdown")` to the official async `lifespan` context manager, resolving deprecation warnings.
+- **Affected Files**:
+  - `[MODIFIED]` `app.py`
+  - `[MODIFIED]` `sync_github.command`
+  - `[MODIFIED]` `sync_github.sh`
+  - `[MODIFIED]` `run_ai_cctv.bat`
+  - `[MODIFIED]` `logs.md`
+- **Line Changes Breakdown**:
+  - `app.py`: Lines 572–585 (Replaced `on_event` with `lifespan=lifespan`), Lines 1133–1137 (Removed navbar buttons).
+  - `sync_github.command`: Lines 38–58 (Added background execution of `logs_reader.py`, shell trap handler, and independent browser openings).
+  - `sync_github.sh`: Lines 38–58 (Added background execution of `logs_reader.py`, shell trap handler, and independent browser openings).
+  - `run_ai_cctv.bat`: Lines 15–20 (Added background launch for `logs_reader.py`).
+  - `logs.md`: Lines 140–175 (Added Log #004 entry).
+
+---

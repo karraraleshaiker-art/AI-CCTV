@@ -13,6 +13,7 @@ import os
 import sys
 import threading
 import time
+from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Dict, List, Optional
 from urllib.parse import quote
@@ -571,10 +572,17 @@ AI_ENGINE = MultiCameraAIProcessor()
 # ---------------------------------------------------------------------------
 # FastAPI Application & Endpoints
 # ---------------------------------------------------------------------------
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    AI_ENGINE.start()
+    yield
+    AI_ENGINE.stop()
+
 app = FastAPI(
     title="AI-CCTV Solar Factory Monitoring Platform",
     description="Smart Video Analytics & Compliance Dashboard for Al Noor Solar Factory",
-    version="1.0.0"
+    version="1.0.0",
+    lifespan=lifespan
 )
 
 app.add_middleware(
@@ -586,14 +594,6 @@ app.add_middleware(
 )
 
 app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
-
-@app.on_event("startup")
-def startup_event():
-    AI_ENGINE.start()
-
-@app.on_event("shutdown")
-def shutdown_event():
-    AI_ENGINE.stop()
 
 # --- Video Stream Endpoint (MJPEG) ---
 @app.get("/api/stream/{cam_id}")
@@ -1134,12 +1134,6 @@ DASHBOARD_HTML = r"""<!DOCTYPE html>
             <span class="btn" style="border-color: rgba(16, 185, 129, 0.3); color: #34d399;">
                 <span class="dot-pulse"></span> NVR Online (192.168.100.203)
             </span>
-            <a href="http://127.0.0.1:8808" target="_blank" class="btn">
-                📜 Logs Reader
-            </a>
-            <a href="https://github.com/karraraleshaiker-art/AI-CCTV" target="_blank" class="btn btn-cyan">
-                🐙 GitHub Repo
-            </a>
         </div>
     </header>
 
