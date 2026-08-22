@@ -214,3 +214,21 @@ Each changelog entry must strictly follow this structure:
   - `logs.md`: Lines 190–225 (Added Log #006 entry).
 
 ---
+
+### 🏷️ [Log #007] - Logs Reader Multi-Line Markdown Parser & UI Card Scope Rendering Fix
+- **Author**: Ali Al-Khazali
+- **Timestamp**: 2026-08-22 10:25:00 UTC+3
+- **AI Agent**: Antigravity
+- **Objective / Purpose**:
+  - Resolved parser issue in `logs_reader.py` where nested multi-line markdown bullet points under `Objective / Purpose` and `Line Changes Breakdown` were stripped during text tokenization.
+  - Upgraded `parse_logs_md()` to robustly extract multi-bullet objectives into structured `purpose_list` arrays, clean file tagging tokens, and detailed code scope descriptions.
+  - Enhanced frontend card rendering in `logs_reader.py` to display purpose bullet lists (`<ul><li>`), clean file badges with status colors, and line-level changes with code formatting.
+  - Verified 100% extraction accuracy across all changelog cards (Logs #001 through #007).
+- **Affected Files**:
+  - `[MODIFIED]` `logs_reader.py`
+  - `[MODIFIED]` `logs.md`
+- **Line Changes Breakdown**:
+  - `logs_reader.py`: Lines 420–540 (Updated JavaScript UI rendering for purpose lists and diff cards), Lines 550–650 (Re-engineered Markdown AST tokenizer and line stripper).
+  - `logs.md`: Lines 215–240 (Added Log #007 entry).
+
+---

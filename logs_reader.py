@@ -480,8 +480,9 @@ HTML_TEMPLATE = """<!DOCTYPE html>
         }
 
         .line-diff-item {
-            padding: 0.3rem 0;
+            padding: 0.35rem 0;
             border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+            color: #cbd5e1;
         }
         .line-diff-item:last-child {
             border-bottom: none;
@@ -651,7 +652,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
                 const matchAuthor = (currentAuthorFilter === 'ALL') || 
                     (c.author && c.author.toLowerCase().includes(currentAuthorFilter.toLowerCase()));
                 
-                const searchStr = `${c.id} ${c.title} ${c.author} ${c.agent} ${c.purpose} ${c.files.join(' ')} ${c.diffs.join(' ')}`.toLowerCase();
+                const searchStr = `${c.id} ${c.title} ${c.author} ${c.agent} ${(c.purpose_list || []).join(' ')} ${c.files.join(' ')} ${c.diffs.join(' ')}`.toLowerCase();
                 const matchQuery = !query || searchStr.includes(query);
 
                 return matchAuthor && matchQuery;
@@ -674,13 +675,16 @@ HTML_TEMPLATE = """<!DOCTYPE html>
                     return `<span class="file-tag ${cls}">${escapeHtml(f)}</span>`;
                 }).join('');
 
+                const purposeList = (c.purpose_list && c.purpose_list.length > 0) ? c.purpose_list : (c.purpose ? [c.purpose] : []);
+                const purposeHtml = purposeList.map(p => `<li style="margin-bottom: 0.35rem;">${escapeHtml(p)}</li>`).join('');
+
                 const diffsHtml = c.diffs.map(d => `<div class="line-diff-item">⚡ ${escapeHtml(d)}</div>`).join('');
 
                 return `
                     <div class="log-card">
                         <div class="card-header">
                             <div class="card-title">
-                                <span>${escapeHtml(c.title)}</span>
+                                <span>🏷️ [${escapeHtml(c.id)}] - ${escapeHtml(c.title)}</span>
                             </div>
                             <div class="badges">
                                 <span class="badge ${authorBadgeClass}">👤 ${escapeHtml(c.author || 'Unknown')}</span>
@@ -692,7 +696,11 @@ HTML_TEMPLATE = """<!DOCTYPE html>
                         <div class="card-meta-grid">
                             <div class="meta-item" style="grid-column: 1 / -1;">
                                 <div class="meta-label">🎯 Objective / Purpose</div>
-                                <div class="meta-content">${escapeHtml(c.purpose)}</div>
+                                <div class="meta-content">
+                                    <ul style="padding-left: 1.2rem; margin-top: 0.3rem; color: #e2e8f0; line-height: 1.5;">
+                                        ${purposeHtml || '<li>None specified</li>'}
+                                    </ul>
+                                </div>
                             </div>
                             <div class="meta-item" style="grid-column: 1 / -1;">
                                 <div class="meta-label">📁 Affected Files (${c.files.length})</div>
@@ -735,70 +743,84 @@ def parse_logs_md():
         return {"overview_raw": "logs.md not found", "cards": []}
 
     content = LOGS_FILE.read_text(encoding="utf-8")
-    
-    # Split overview and changelog
-    overview_parts = []
-    cards = []
-
     lines = content.splitlines()
-    in_section_3 = False
+
+    cards = []
     current_card = None
-    card_mode = None
+    section = None
+    overview_lines = []
+    in_section_3 = False
 
     for line in lines:
-        if "Section 3:" in line or "# Section 3" in line:
-            in_section_3 = True
-            continue
+        stripped = line.strip()
 
         if not in_section_3:
-            overview_parts.append(line)
-        else:
-            # Match card header e.g. "### 🏷️ [Log #001] - Initial Core Architecture..."
-            card_match = re.match(r"^###\s*.*\[(Log\s*#?[^\]]+)\]\s*-\s*(.+)", line.strip())
-            if card_match:
-                if current_card:
-                    cards.append(current_card)
-                current_card = {
-                    "id": card_match.group(1).strip(),
-                    "title": line.strip().lstrip('#').strip(),
-                    "author": "",
-                    "timestamp": "",
-                    "agent": "",
-                    "purpose": "",
-                    "files": [],
-                    "diffs": []
-                }
-                card_mode = None
-                continue
+            if "Section 3:" in stripped or "# Section 3" in stripped:
+                in_section_3 = True
+            else:
+                overview_lines.append(line)
+            continue
 
+        if not stripped or stripped == "---":
+            continue
+
+        card_match = re.match(r"^###\s*.*\[(Log\s*#?[^\]]+)\]\s*-\s*(.+)", stripped)
+        if card_match:
             if current_card:
-                stripped = line.strip()
-                if stripped.startswith("- **Author**:") or stripped.startswith("**Author**:"):
-                    current_card["author"] = stripped.split(":", 1)[1].strip()
-                elif stripped.startswith("- **Timestamp**:") or stripped.startswith("**Timestamp**:"):
-                    current_card["timestamp"] = stripped.split(":", 1)[1].strip()
-                elif stripped.startswith("- **AI Agent**:") or stripped.startswith("**AI Agent**:"):
-                    current_card["agent"] = stripped.split(":", 1)[1].strip()
-                elif stripped.startswith("- **Objective / Purpose**:") or stripped.startswith("**Objective / Purpose**:"):
-                    current_card["purpose"] = stripped.split(":", 1)[1].strip()
-                    card_mode = "purpose"
-                elif stripped.startswith("- **Affected Files**:"):
-                    card_mode = "files"
-                elif stripped.startswith("- **Line Changes Breakdown**:"):
-                    card_mode = "diffs"
-                elif stripped.startswith("- `") or stripped.startswith("`["):
-                    if card_mode == "files":
-                        current_card["files"].append(stripped.lstrip('- ').strip('`'))
-                elif stripped.startswith("- `") or (stripped.startswith("-") and card_mode == "diffs"):
-                    current_card["diffs"].append(stripped.lstrip('- ').strip())
-                elif stripped and card_mode == "purpose" and not stripped.startswith("-"):
-                    current_card["purpose"] += " " + stripped
+                cards.append(current_card)
+            current_card = {
+                "id": card_match.group(1).strip(),
+                "title": card_match.group(2).strip(),
+                "author": "",
+                "timestamp": "",
+                "agent": "",
+                "purpose_list": [],
+                "files": [],
+                "diffs": []
+            }
+            section = None
+            continue
+
+        if not current_card:
+            continue
+
+        if stripped.startswith("- **Author**:"):
+            current_card["author"] = stripped.split(":", 1)[1].strip()
+            section = None
+        elif stripped.startswith("- **Timestamp**:"):
+            current_card["timestamp"] = stripped.split(":", 1)[1].strip()
+            section = None
+        elif stripped.startswith("- **AI Agent**:"):
+            current_card["agent"] = stripped.split(":", 1)[1].strip()
+            section = None
+        elif stripped.startswith("- **Objective / Purpose**:"):
+            inline_val = stripped.split(":", 1)[1].strip()
+            if inline_val:
+                current_card["purpose_list"].append(inline_val)
+            section = "purpose"
+        elif stripped.startswith("- **Affected Files**:"):
+            section = "files"
+        elif stripped.startswith("- **Line Changes Breakdown**:"):
+            section = "diffs"
+        else:
+            item_text = re.sub(r"^\s*[-*]\s*", "", stripped)
+            if section == "purpose":
+                if item_text:
+                    current_card["purpose_list"].append(item_text)
+            elif section == "files":
+                clean_f = item_text.replace("`", "").strip()
+                if clean_f:
+                    current_card["files"].append(clean_f)
+            elif section == "diffs":
+                clean_d = item_text.replace("`", "").strip()
+                if clean_d:
+                    current_card["diffs"].append(clean_d)
 
     if current_card:
         cards.append(current_card)
 
     return {
-        "overview_raw": "\n".join(overview_parts),
+        "overview_raw": "\n".join(overview_lines),
         "cards": cards
     }
 
