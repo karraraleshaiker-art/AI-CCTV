@@ -102,7 +102,12 @@ from database import (
     db_update_incident_review,
     db_get_zones_for_cam,
     db_save_zones_for_cam,
+    db_get_employees,
+    db_save_employee,
+    db_delete_employee,
+    db_load_all_face_embeddings,
 )
+from face_engine import GLOBAL_FACE_ENGINE
 
 # ---------------------------------------------------------------------------
 # Incident & Rules Management
@@ -338,12 +343,33 @@ class MultiCameraAIProcessor:
         self.ai_ms = 0.0
         self.lock = threading.Lock()
         
+        # Biometric Face Roster: list of (id, name, code, assigned_zone, np_embedding)
+        self.face_roster: list = []
+        # Keyframe Track Identity Cache: { (cam_id, track_id): (full_name, emp_code, assigned_zone, score) }
+        self.track_identity_cache: Dict[Tuple[int, int], Tuple[str, str, Optional[str], float]] = {}
+
         # Zone absence tracking state: { (cam_id, zone_id): last_seen_epoch }
         self.zone_last_seen: Dict[tuple, float] = {}
         # Phone duration tracking: { (cam_id, track_id): first_detected_epoch }
         self.phone_tracking: Dict[tuple, float] = {}
 
+    def reload_face_roster(self):
+        """Asynchronously loads all active employee face embeddings into active memory."""
+        def _load():
+            try:
+                roster = asyncio.run(db_load_all_face_embeddings())
+                with self.lock:
+                    self.face_roster = roster
+                    self.track_identity_cache.clear()
+                print(f"[BIOMETRIC] Loaded {len(roster)} employee face embedding(s) into active memory.")
+            except Exception as e:
+                print(f"[BIOMETRIC] Error loading face roster: {e}")
+        threading.Thread(target=_load, daemon=True).start()
+
     def start(self):
+        # Load registered face embeddings
+        self.reload_face_roster()
+
         # Initialize camera streams based on active_cameras setting
         active_cams = SETTINGS.get("active_cameras", [14, 15])
         for cid in active_cams:
@@ -438,7 +464,7 @@ class MultiCameraAIProcessor:
                     # Model inference fallback
                     pass
 
-                # Apply Rules Engine & Render Overlays
+                # Apply Rules Engine, Face Biometrics & Render Overlays
                 annotated = self._process_rules_and_render(stream.cam_id, frame, dets, w, h)
                 stream.set_annotated(annotated)
 
@@ -459,15 +485,37 @@ class MultiCameraAIProcessor:
         person_feet_points = []
         person_phone_matched = False
 
-        # 1. Draw Detections
+        # 1. Draw Detections & Biometric Identity Fusion
         for typ, b, cf, tid in dets:
             x1, y1, x2, y2 = map(int, b)
             if typ == "person":
                 people_count += 1
                 feet = (int((x1 + x2) / 2), int(y2))
                 person_feet_points.append((feet, tid))
-                color = COLOR_GREEN
-                label = f"Worker {tid if tid >= 0 else ''} | {cf:.2f}"
+
+                # Biometric Facial Recognition on Person Crop
+                emp_name = None
+                emp_code = None
+                if tid >= 0 and self.face_roster:
+                    if (cam_id, tid) in self.track_identity_cache:
+                        emp_name, emp_code, _, _ = self.track_identity_cache[(cam_id, tid)]
+                    else:
+                        # Extract upper body crop for face recognition
+                        pcrop = frame[max(0, y1):min(h, y2), max(0, x1):min(w, x2)]
+                        if pcrop.size > 0 and pcrop.shape[0] > 50 and pcrop.shape[1] > 30:
+                            m_name, m_code, m_zone, m_score = GLOBAL_FACE_ENGINE.detect_and_recognize_person_crop(
+                                pcrop, self.face_roster, threshold=0.48
+                            )
+                            if m_name:
+                                emp_name, emp_code = m_name, m_code
+                                self.track_identity_cache[(cam_id, tid)] = (m_name, m_code, m_zone, m_score)
+
+                if emp_name:
+                    color = (255, 215, 0) # Cyan/Gold for identified employee
+                    label = f"👤 {emp_name} ({emp_code}) | {cf:.2f}"
+                else:
+                    color = COLOR_GREEN
+                    label = f"Worker {tid if tid >= 0 else ''} | {cf:.2f}"
             else:
                 phone_count += 1
                 color = COLOR_RED
@@ -757,9 +805,72 @@ async def review_incident(incident_id: str, req: IncidentActionReq):
                 inc.status = req.action
                 return {"status": "ok", "incident": inc.to_dict()}
 
-    if updated:
-        return {"status": "ok", "incident": updated}
-    raise HTTPException(status_code=404, detail="Incident not found")
+# --- Employee Biometric & Directory Endpoints ---
+class EmployeeEnrollReq(BaseModel):
+    full_name: str
+    employee_code: str
+    department: Optional[str] = "Solar Assembly Line"
+    assigned_zone_id: Optional[str] = None
+    photo_base64: str
+
+@app.get("/api/employees")
+async def get_employees_list():
+    try:
+        return await db_get_employees()
+    except Exception as e:
+        print(f"[DB GET EMPLOYEES] {e}")
+        return []
+
+@app.post("/api/employees/enroll")
+async def enroll_employee(req: EmployeeEnrollReq):
+    try:
+        raw_b64 = req.photo_base64
+        if "," in raw_b64:
+            raw_b64 = raw_b64.split(",", 1)[1]
+        img_bytes = base64.b64decode(raw_b64)
+        nparr = np.frombuffer(img_bytes, np.uint8)
+        img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+        if img is None:
+            raise HTTPException(status_code=400, detail="Invalid image file format.")
+
+        # Extract 128-D biometric embedding
+        embedding = GLOBAL_FACE_ENGINE.extract_face_embedding(img)
+        if embedding is None:
+            raise HTTPException(
+                status_code=400,
+                detail="No clear human face detected in the photo. Please provide a clear, front-facing image."
+            )
+
+        emp_dir = STATIC_DIR / "employees"
+        emp_dir.mkdir(exist_ok=True)
+        photo_filename = f"emp_{req.employee_code.replace('/', '_')}_{int(time.time())}.jpg"
+        photo_path = emp_dir / photo_filename
+        cv2.imwrite(str(photo_path), img)
+
+        emp = await db_save_employee(
+            full_name=req.full_name,
+            employee_code=req.employee_code,
+            department=req.department or "Solar Assembly Line",
+            assigned_zone_id=req.assigned_zone_id,
+            face_embedding=embedding.tobytes(),
+            photo_path=f"/static/employees/{photo_filename}"
+        )
+
+        # Refresh memory roster in AI Engine
+        AI_ENGINE.reload_face_roster()
+        return {"status": "ok", "employee": emp}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/employees/{emp_id}/delete")
+async def delete_employee_profile(emp_id: int):
+    ok = await db_delete_employee(emp_id)
+    if ok:
+        AI_ENGINE.reload_face_roster()
+        return {"status": "ok"}
+    raise HTTPException(status_code=404, detail="Employee not found")
 
 # ---------------------------------------------------------------------------
 # High-Tech Web Dashboard UI (HTML / Tailwind CSS / Vanilla JS)
@@ -1189,6 +1300,9 @@ DASHBOARD_HTML = r"""<!DOCTYPE html>
             <span class="btn" style="border-color: rgba(16, 185, 129, 0.3); color: #34d399;">
                 <span class="dot-pulse"></span> NVR Online (192.168.100.203)
             </span>
+            <button class="btn btn-cyan" onclick="openEmployeesModal()">
+                👥 Employees (إدارة الموظفين)
+            </button>
         </div>
     </header>
 
@@ -1309,10 +1423,182 @@ DASHBOARD_HTML = r"""<!DOCTYPE html>
         </div>
     </div>
 
+    <!-- Employee Directory & Biometric Enrollment Modal -->
+    <div class="modal-overlay" id="employeeModal">
+        <div class="modal-card" style="max-width: 960px; max-height: 90vh; overflow-y: auto;">
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 0.8rem;">
+                <h3 style="display: flex; align-items: center; gap: 0.5rem;">
+                    👥 Employee Directory & Biometrics (دليل الموظفين والبصمات)
+                </h3>
+                <button class="btn" onclick="closeEmployeesModal()">✕ Close</button>
+            </div>
+
+            <!-- Enrollment Form -->
+            <div style="background: rgba(0, 0, 0, 0.35); border: 1px solid var(--border); border-radius: 8px; padding: 1.2rem; display: flex; flex-direction: column; gap: 1rem;">
+                <h4 style="color: var(--cyan); font-size: 0.92rem;">➕ Enroll New Worker with Biometric Face (تسجيل عامل جديد)</h4>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+                    <div>
+                        <label style="font-size: 0.75rem; color: var(--text-muted);">Full Name (الاسم الكامل):</label>
+                        <input type="text" id="empNameInput" class="btn" style="width: 100%; margin-top: 0.2rem;" placeholder="e.g. Ali Al-Khazali">
+                    </div>
+                    <div>
+                        <label style="font-size: 0.75rem; color: var(--text-muted);">Employee Code (الرقم الوظيفي):</label>
+                        <input type="text" id="empCodeInput" class="btn" style="width: 100%; margin-top: 0.2rem;" placeholder="e.g. EMP-101">
+                    </div>
+                    <div>
+                        <label style="font-size: 0.75rem; color: var(--text-muted);">Department (القسم):</label>
+                        <input type="text" id="empDeptInput" class="btn" style="width: 100%; margin-top: 0.2rem;" value="Solar Panel Assembly">
+                    </div>
+                    <div>
+                        <label style="font-size: 0.75rem; color: var(--text-muted);">Assigned Station (محطة العمل):</label>
+                        <select id="empZoneSelect" class="btn" style="width: 100%; margin-top: 0.2rem;">
+                            <option value="">-- All Stations (Any) --</option>
+                            <option value="z_14_workstation">Assembly Line 1 Workstation (Cam 14)</option>
+                            <option value="z_15_workstation">Solar Cell Soldering Station (Cam 15)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 0.8rem;">
+                    <div style="display: flex; align-items: center; gap: 0.8rem;">
+                        <label class="btn" style="cursor: pointer; background: rgba(59, 130, 246, 0.2); border-color: var(--blue);">
+                            📷 Select Face Photo...
+                            <input type="file" id="empPhotoFile" accept="image/*" style="display: none;" onchange="handlePhotoSelect(this)">
+                        </label>
+                        <span id="photoFileName" style="font-size: 0.8rem; color: var(--text-muted);">No image chosen</span>
+                    </div>
+
+                    <button class="btn btn-cyan" onclick="submitEmployeeEnrollment()">
+                        💾 Extract Biometrics & Save Worker
+                    </button>
+                </div>
+                <div id="enrollStatusMsg" style="font-size: 0.82rem; display: none;"></div>
+            </div>
+
+            <!-- Existing Employees Roster Table -->
+            <div style="display: flex; flex-direction: column; gap: 0.6rem;">
+                <h4 style="font-size: 0.92rem; color: #fff;">📋 Registered Factory Workforce (<span id="empCountHeader">0</span>)</h4>
+                <div id="employeesListContainer" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 0.8rem; max-height: 320px; overflow-y: auto;">
+                    <!-- Cards will be populated dynamically -->
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
         let currentEditingCam = null;
         let drawnPoints = []; // normalized [ [x, y], ... ]
         let activeCamIds = [];
+        let selectedEmpPhotoB64 = "";
+
+        function openEmployeesModal() {
+            document.getElementById('employeeModal').style.display = 'flex';
+            fetchEmployees();
+        }
+
+        function closeEmployeesModal() {
+            document.getElementById('employeeModal').style.display = 'none';
+        }
+
+        function handlePhotoSelect(input) {
+            const file = input.files[0];
+            if (!file) return;
+            document.getElementById('photoFileName').textContent = file.name;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                selectedEmpPhotoB64 = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        async function fetchEmployees() {
+            try {
+                const res = await fetch('/api/employees');
+                const list = await res.json();
+                document.getElementById('empCountHeader').textContent = list.length;
+                const container = document.getElementById('employeesListContainer');
+
+                if (list.length === 0) {
+                    container.innerHTML = `<div style="grid-column: 1/-1; text-align: center; padding: 2rem; color: var(--text-muted);">No employees registered yet. Enroll workers above.</div>`;
+                    return;
+                }
+
+                container.innerHTML = list.map(emp => `
+                    <div style="background: rgba(0, 0, 0, 0.4); border: 1px solid var(--border); border-radius: 8px; padding: 0.8rem; display: flex; align-items: center; justify-content: space-between; gap: 0.8rem;">
+                        <div style="display: flex; align-items: center; gap: 0.8rem;">
+                            <img src="${emp.photo_path || '/static/logo.png'}" style="width: 44px; height: 44px; border-radius: 50%; object-fit: cover; border: 1px solid var(--cyan);" onerror="this.src='/static/logo.png'">
+                            <div>
+                                <div style="font-weight: 700; font-size: 0.88rem; color: #fff;">${escapeHtml(emp.full_name)}</div>
+                                <div style="font-size: 0.75rem; color: var(--cyan); font-family: 'Fira Code', monospace;">${escapeHtml(emp.employee_code)} • ${escapeHtml(emp.department)}</div>
+                                <div style="font-size: 0.72rem; color: var(--text-muted);">${emp.assigned_zone_id ? 'Station: ' + escapeHtml(emp.assigned_zone_id) : 'All Stations'}</div>
+                            </div>
+                        </div>
+                        <button class="btn" style="color: var(--red); padding: 0.3rem 0.6rem; font-size: 0.75rem;" onclick="deleteEmployee(${emp.id})">🗑️</button>
+                    </div>
+                `).join('');
+            } catch (err) {
+                console.error("Error loading employees:", err);
+            }
+        }
+
+        async function submitEmployeeEnrollment() {
+            const name = document.getElementById('empNameInput').value.trim();
+            const code = document.getElementById('empCodeInput').value.trim();
+            const dept = document.getElementById('empDeptInput').value.trim();
+            const zone = document.getElementById('empZoneSelect').value;
+            const msgBox = document.getElementById('enrollStatusMsg');
+
+            if (!name || !code) {
+                alert("Please enter both Full Name and Employee Code.");
+                return;
+            }
+            if (!selectedEmpPhotoB64) {
+                alert("Please select a clear photo containing the employee's face.");
+                return;
+            }
+
+            msgBox.style.display = 'block';
+            msgBox.style.color = 'var(--cyan)';
+            msgBox.textContent = "⏳ Extracting biometric facial embedding and saving profile...";
+
+            try {
+                const res = await fetch('/api/employees/enroll', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        full_name: name,
+                        employee_code: code,
+                        department: dept,
+                        assigned_zone_id: zone || null,
+                        photo_base64: selectedEmpPhotoB64
+                    })
+                });
+
+                const data = await res.json();
+                if (res.ok) {
+                    msgBox.style.color = 'var(--green)';
+                    msgBox.textContent = `✅ Successfully enrolled ${name} with biometric face recognition!`;
+                    document.getElementById('empNameInput').value = '';
+                    document.getElementById('empCodeInput').value = '';
+                    document.getElementById('photoFileName').textContent = 'No image chosen';
+                    selectedEmpPhotoB64 = '';
+                    fetchEmployees();
+                } else {
+                    msgBox.style.color = 'var(--red)';
+                    msgBox.textContent = `❌ Enrollment Error: ${data.detail || 'Failed'}`;
+                }
+            } catch (err) {
+                msgBox.style.color = 'var(--red)';
+                msgBox.textContent = `❌ Network Error: ${err.message}`;
+            }
+        }
+
+        async function deleteEmployee(empId) {
+            if (confirm("Delete this employee and their biometric face profile?")) {
+                await fetch(`/api/employees/${empId}/delete`, { method: 'POST' });
+                fetchEmployees();
+            }
+        }
 
         async function fetchTelemetry() {
             try {

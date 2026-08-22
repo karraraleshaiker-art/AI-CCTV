@@ -188,3 +188,29 @@ Each changelog entry must strictly follow this structure:
   - `logs.md`: Lines 165–200 (Added Log #005 entry).
 
 ---
+
+### 🏷️ [Log #006] - Biometric Facial Recognition Engine, Employee Directory & Keyframe Track-Fusion
+- **Author**: Ali Al-Khazali
+- **Timestamp**: 2026-08-22 10:20:00 UTC+3
+- **AI Agent**: Antigravity
+- **Objective / Purpose**:
+  - Implemented real-time **Biometric Facial Recognition Engine** (`face_engine.py`) using OpenCV YuNet CNN face detector and SFace deep metric feature recognizer.
+  - Built **Keyframe Track-Fusion Architecture**: ByteTrack body tracking is seamlessly fused with facial identity caching, locking recognized worker names onto track IDs without repetitive high-cost frame inference.
+  - Added `EmployeeModel` and `AttendanceLogModel` to `models.py` with binary storage of 128-D L2-normalized biometric face embeddings.
+  - Created asynchronous employee CRUD and in-memory vector roster matching in `database.py`.
+  - Built complete **Employee Management Module & Enrollment Modal** in the Web Dashboard (`app.py`), supporting photo upload, real-time face landmark verification, and worker directory management.
+  - Rendered recognized worker badges (`👤 Name (Code) | Conf`) in bright gold/cyan directly on the live camera stream overlay.
+- **Affected Files**:
+  - `[ADDED]` `face_engine.py`
+  - `[MODIFIED]` `models.py`
+  - `[MODIFIED]` `database.py`
+  - `[MODIFIED]` `app.py`
+  - `[MODIFIED]` `logs.md`
+- **Line Changes Breakdown**:
+  - `face_engine.py`: Lines 1–115 (Created FaceEngine with YuNet alignment and SFace Cosine Similarity vector matching).
+  - `models.py`: Lines 135–185 (Added EmployeeModel and AttendanceLogModel).
+  - `database.py`: Lines 215–295 (Added db_get_employees, db_save_employee, db_delete_employee, db_load_all_face_embeddings).
+  - `app.py`: Lines 340–495 (Integrated biometric recognition and track identity cache into AI loop), Lines 810–875 (Added Employee REST API), Lines 1300–1540 (Added Employees Modal UI and JS handlers).
+  - `logs.md`: Lines 190–225 (Added Log #006 entry).
+
+---

@@ -212,3 +212,89 @@ async def db_save_zones_for_cam(cam_id: int, zones_list: list):
         )
         session.add(audit)
         await session.commit()
+
+# ---------------------------------------------------------------------------
+# Employee Biometric & Attendance Management (CRUD)
+# ---------------------------------------------------------------------------
+async def db_get_employees() -> List[dict]:
+    """Fetches all registered employees."""
+    async with AsyncSessionLocal() as session:
+        result = await session.execute(select(EmployeeModel).order_by(EmployeeModel.id.asc()))
+        emps = result.scalars().all()
+        return [e.to_dict() for e in emps]
+
+async def db_save_employee(
+    full_name: str,
+    employee_code: str,
+    department: str,
+    assigned_zone_id: Optional[str],
+    face_embedding: bytes,
+    photo_path: Optional[str] = None
+) -> dict:
+    """Enrolls or updates an employee with biometric embedding."""
+    async with AsyncSessionLocal() as session:
+        result = await session.execute(select(EmployeeModel).where(EmployeeModel.employee_code == employee_code))
+        emp = result.scalar_one_or_none()
+        if emp:
+            emp.full_name = full_name
+            emp.department = department
+            emp.assigned_zone_id = assigned_zone_id
+            emp.face_embedding = face_embedding
+            if photo_path:
+                emp.photo_path = photo_path
+        else:
+            emp = EmployeeModel(
+                employee_code=employee_code,
+                full_name=full_name,
+                department=department,
+                assigned_zone_id=assigned_zone_id,
+                face_embedding=face_embedding,
+                photo_path=photo_path,
+                is_active=True
+            )
+            session.add(emp)
+
+        audit = AuditLogModel(
+            actor="Admin",
+            action="EMPLOYEE_ENROLLED",
+            details=f"Employee {full_name} ({employee_code}) enrolled with biometric facial embedding."
+        )
+        session.add(audit)
+        await session.commit()
+        return emp.to_dict()
+
+async def db_delete_employee(emp_id: int) -> bool:
+    """Deletes an employee profile."""
+    async with AsyncSessionLocal() as session:
+        result = await session.execute(select(EmployeeModel).where(EmployeeModel.id == emp_id))
+        emp = result.scalar_one_or_none()
+        if emp:
+            code = emp.employee_code
+            name = emp.full_name
+            await session.delete(emp)
+            audit = AuditLogModel(
+                actor="Admin",
+                action="EMPLOYEE_DELETED",
+                details=f"Employee {name} ({code}) deleted."
+            )
+            session.add(audit)
+            await session.commit()
+            return True
+        return False
+
+async def db_load_all_face_embeddings():
+    """Loads all active employee face embeddings as numpy arrays into memory."""
+    import numpy as np
+    roster = []
+    async with AsyncSessionLocal() as session:
+        result = await session.execute(select(EmployeeModel).where(EmployeeModel.is_active == True))
+        emps = result.scalars().all()
+        for e in emps:
+            if e.face_embedding:
+                try:
+                    arr = np.frombuffer(e.face_embedding, dtype=np.float32)
+                    roster.append((e.id, e.full_name, e.employee_code, e.assigned_zone_id, arr))
+                except Exception as err:
+                    print(f"[DB] Error unpacking embedding for {e.full_name}: {err}")
+    return roster
+

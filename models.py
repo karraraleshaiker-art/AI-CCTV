@@ -12,6 +12,7 @@ from sqlalchemy import (
     Float,
     ForeignKey,
     Integer,
+    LargeBinary,
     String,
     Text,
 )
@@ -131,6 +132,55 @@ class IncidentModel(Base):
             "reviewed_by": self.reviewed_by,
             "reviewed_at": self.reviewed_at.strftime("%Y-%m-%d %H:%M:%S") if self.reviewed_at else None,
             "review_notes": self.review_notes
+        }
+
+
+class EmployeeModel(Base):
+    __tablename__ = "employees"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    employee_code: Mapped[str] = mapped_column(String(50), unique=True, index=True, nullable=False) # e.g. EMP-101
+    full_name: Mapped[str] = mapped_column(String(150), nullable=False)
+    department: Mapped[str] = mapped_column(String(100), default="Solar Assembly Line")
+    assigned_zone_id: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
+    face_embedding: Mapped[bytes] = mapped_column(LargeBinary, nullable=False) # Raw float32 array bytes
+    photo_path: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+    created_at: Mapped[datetime.datetime] = mapped_column(DateTime, default=datetime.datetime.utcnow)
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "employee_code": self.employee_code,
+            "full_name": self.full_name,
+            "department": self.department,
+            "assigned_zone_id": self.assigned_zone_id,
+            "photo_path": self.photo_path,
+            "is_active": self.is_active,
+            "created_at": self.created_at.strftime("%Y-%m-%d %H:%M:%S") if self.created_at else ""
+        }
+
+
+class AttendanceLogModel(Base):
+    __tablename__ = "attendance_logs"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    employee_id: Mapped[int] = mapped_column(Integer, ForeignKey("employees.id"), index=True, nullable=False)
+    camera_id: Mapped[int] = mapped_column(Integer, index=True, nullable=False)
+    zone_id: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
+    first_seen: Mapped[datetime.datetime] = mapped_column(DateTime, default=datetime.datetime.utcnow)
+    last_seen: Mapped[datetime.datetime] = mapped_column(DateTime, default=datetime.datetime.utcnow)
+    compliance_status: Mapped[str] = mapped_column(String(50), default="authorized") # authorized, wrong_station, restricted_area
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "employee_id": self.employee_id,
+            "camera_id": self.camera_id,
+            "zone_id": self.zone_id,
+            "first_seen": self.first_seen.strftime("%Y-%m-%d %H:%M:%S") if self.first_seen else "",
+            "last_seen": self.last_seen.strftime("%Y-%m-%d %H:%M:%S") if self.last_seen else "",
+            "compliance_status": self.compliance_status
         }
 
 
