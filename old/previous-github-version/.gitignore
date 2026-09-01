@@ -1,0 +1,30 @@
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+.env
+.venv/
+venv/
+env/
+
+# Model weights and engines
+*.pt
+*.pth
+*.onnx
+*.engine
+yolo11*.pt
+
+# Database runtime files
+*.db
+*.db-wal
+*.db-shm
+*.db-journal
+*.sqlite
+*.sqlite3
+
+# OS & IDE metadata
+.DS_Store
+.vscode/
+.idea/
+*.log

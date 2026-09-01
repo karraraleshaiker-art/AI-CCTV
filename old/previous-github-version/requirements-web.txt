@@ -1,0 +1,11 @@
+aiosqlite
+fastapi
+numpy
+opencv-python
+psutil
+pydantic
+python-multipart
+sqlalchemy
+torch
+ultralytics
+uvicorn
