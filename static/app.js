@@ -104,7 +104,7 @@ async function refreshStatus() {
   frames.textContent = data.frame_count;
   people.textContent = data.tracks.length;
   const frameStatus = data.frame_count === 0 ? data.status : "Live processing";
-  cameraMeta.textContent = `${frameStatus} | ${data.config.camera_source} | ${data.config.model_name}`;
+  cameraMeta.textContent = `${frameStatus} | ${data.config.camera_source} | ${data.config.model_name} | ${data.config.frame_width}w @ ${data.config.stream_fps} fps target`;
   if (!editing) {
     zone = data.zone;
     drawZone();

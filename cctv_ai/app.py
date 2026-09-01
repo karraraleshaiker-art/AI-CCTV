@@ -66,7 +66,10 @@ def create_app(config: AppConfig) -> FastAPI:
                 "nvr_url_style": config.nvr_url_style,
                 "model_name": config.model_name,
                 "confidence": config.confidence,
+                "model_imgsz": config.model_imgsz,
                 "frame_width": config.frame_width,
+                "stream_fps": config.stream_fps,
+                "jpeg_quality": config.jpeg_quality,
             },
         }
 

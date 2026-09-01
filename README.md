@@ -139,9 +139,9 @@ If an RTSP/NVR stream stops returning frames, the pipeline keeps the dashboard r
 
 ## Performance Notes
 
-The NVR main stream is `2560x1440`, which can lag on CPU-only laptops when YOLO runs on every frame. The default AI processing profile resizes frames to `640` pixels wide, targets `10` FPS, lowers JPEG size for the browser, and drops stale RTSP frames so the dashboard stays closer to live video.
+The NVR main stream is `2560x1440`. The default AI processing profile now keeps more detail for far people by resizing frames to `1280` pixels wide, running YOLO at `960` image size, lowering detection confidence to `0.25`, targeting `20` FPS, and using JPEG quality `85` for the browser stream.
 
-If the dashboard is still delayed, use the channel 14 substream by changing `DEFAULT_STREAM` in `tools/run_nvr.py` from `main` to `sub`, or reduce `frame_width` in `config.example.json` to `480`.
+If the processed FPS stays below the target, the model is the bottleneck even if Windows Task Manager does not show 100% CPU/GPU. For more speed, reduce `model_imgsz` to `736` or `640`. For better far-person detection, raise `model_imgsz` to `1280`, but expect lower FPS.
 
 ## Detection Notes
 

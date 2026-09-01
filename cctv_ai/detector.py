@@ -12,7 +12,15 @@ class DetectorError(RuntimeError):
 class YoloDetector:
     """Small wrapper around Ultralytics YOLO."""
 
-    def __init__(self, model_name: str, confidence: float, iou_threshold: float) -> None:
+    def __init__(
+        self,
+        model_name: str,
+        confidence: float,
+        iou_threshold: float,
+        imgsz: int,
+        device: str | None = None,
+        half: bool = True,
+    ) -> None:
         try:
             from ultralytics import YOLO
         except ImportError as exc:
@@ -24,6 +32,9 @@ class YoloDetector:
         self.model = YOLO(model_name)
         self.confidence = confidence
         self.iou_threshold = iou_threshold
+        self.imgsz = imgsz
+        self.device = device
+        self.half = half and supports_half_precision(device)
 
     def detect(self, frame) -> list[Detection]:
         results = self.model(
@@ -31,7 +42,10 @@ class YoloDetector:
             conf=self.confidence,
             iou=self.iou_threshold,
             verbose=False,
-            classes=None,
+            classes=[0, 67],
+            imgsz=self.imgsz,
+            device=self.device,
+            half=self.half,
         )
         detections: list[Detection] = []
 
@@ -59,3 +73,12 @@ def split_detections(detections: Iterable[Detection]) -> tuple[list[Detection], 
             phones.append(detection)
     return people, phones
 
+
+def supports_half_precision(device: str | None) -> bool:
+    if device and device.lower() == "cpu":
+        return False
+    try:
+        import torch
+    except ImportError:
+        return False
+    return bool(torch.cuda.is_available())

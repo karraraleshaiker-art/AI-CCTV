@@ -46,7 +46,7 @@ class CCTVPipeline:
             history_path=config.alert_history_path,
             max_events=config.alert_history_limit,
         )
-        self.tracker = PersonTracker()
+        self.tracker = PersonTracker(max_missed=config.tracker_max_missed, min_iou=config.tracker_min_iou)
         self._lock = threading.Lock()
         self._stop = threading.Event()
         self._thread: threading.Thread | None = None
@@ -99,6 +99,9 @@ class CCTVPipeline:
                 self.config.model_name,
                 confidence=self.config.confidence,
                 iou_threshold=self.config.iou_threshold,
+                imgsz=self.config.model_imgsz,
+                device=self.config.detector_device,
+                half=self.config.detector_half,
             )
             self._set_status("Connecting to camera")
             camera_source = resolve_camera_source(self.config)
