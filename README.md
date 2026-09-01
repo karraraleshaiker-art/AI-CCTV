@@ -117,10 +117,10 @@ rtsp://USERNAME:PASSWORD@192.168.100.203:554/0.2
 You can probe an RTSP URL before starting the web dashboard:
 
 ```powershell
-.\.venv\Scripts\python.exe tools\rtsp_probe.py --config config.local.json
-.\.venv\Scripts\python.exe tools\rtsp_probe.py --template hikvision --channel 14 --stream main --username admin
-.\.venv\Scripts\python.exe tools\rtsp_probe.py --template hikvision --channel 14 --stream sub --username admin
-.\.venv\Scripts\python.exe tools\rtsp_probe.py --template generic --stream main --username admin
+.\.venv\Scripts\python.exe -m tools.rtsp_probe --config config.local.json
+.\.venv\Scripts\python.exe -m tools.rtsp_probe --template hikvision --channel 14 --stream main --username admin
+.\.venv\Scripts\python.exe -m tools.rtsp_probe --template hikvision --channel 14 --stream sub --username admin
+.\.venv\Scripts\python.exe -m tools.rtsp_probe --template generic --stream main --username admin
 ```
 
 ## Define The Place

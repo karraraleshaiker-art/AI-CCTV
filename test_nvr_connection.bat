@@ -46,7 +46,7 @@ echo Default NVR: 192.168.100.203, channel 14, main stream.
 echo Enter the NVR password when asked. It will not be saved.
 echo.
 
-".venv\Scripts\python.exe" tools\rtsp_probe.py --host 192.168.100.203 --channel 14 --stream main --template hikvision --username admin
+".venv\Scripts\python.exe" -m tools.rtsp_probe --host 192.168.100.203 --channel 14 --stream main --template hikvision --username admin
 
 echo.
 pause
