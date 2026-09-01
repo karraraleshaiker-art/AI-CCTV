@@ -3,6 +3,7 @@ from __future__ import annotations
 import threading
 import time
 from dataclasses import dataclass
+from os import environ
 from pathlib import Path
 from typing import Any
 
@@ -101,7 +102,7 @@ class CCTVPipeline:
             )
             self._set_status("Connecting to camera")
             camera_source = resolve_camera_source(self.config)
-            capture = open_video_capture(camera_source)
+            capture = open_video_capture(camera_source, self.config.rtsp_capture_options)
             if not capture.isOpened():
                 raise RuntimeError(f"Could not open camera source: {mask_camera_source(str(camera_source))}")
 
@@ -112,6 +113,8 @@ class CCTVPipeline:
             target_delay = 1.0 / max(1, self.config.stream_fps)
 
             while not self._stop.is_set():
+                loop_started = time.monotonic()
+                drop_stale_frames(capture, self.config.rtsp_stale_frame_grabs)
                 ok, frame = capture.read()
                 if not ok:
                     failed_reads += 1
@@ -124,7 +127,7 @@ class CCTVPipeline:
                         if self._stop.wait(self.config.camera_reconnect_seconds):
                             break
                         self._set_status("Reconnecting to camera")
-                        capture = open_video_capture(camera_source)
+                        capture = open_video_capture(camera_source, self.config.rtsp_capture_options)
                         failed_reads = 0
                     time.sleep(0.2)
                     continue
@@ -138,7 +141,11 @@ class CCTVPipeline:
                 pending_alerts = self._evaluate_tracks(tracks, phones, zone)
                 annotated = self._draw(frame, tracks, phones, zone)
                 self._save_alerts(pending_alerts, annotated)
-                ok, encoded = cv2.imencode(".jpg", annotated, [int(cv2.IMWRITE_JPEG_QUALITY), 82])
+                ok, encoded = cv2.imencode(
+                    ".jpg",
+                    annotated,
+                    [int(cv2.IMWRITE_JPEG_QUALITY), normalized_jpeg_quality(self.config.jpeg_quality)],
+                )
                 if ok:
                     with self._lock:
                         self._latest_jpeg = encoded.tobytes()
@@ -156,7 +163,9 @@ class CCTVPipeline:
                     frames_since_tick = 0
                     last_tick = now
 
-                time.sleep(target_delay)
+                sleep_for = target_delay - (time.monotonic() - loop_started)
+                if sleep_for > 0:
+                    time.sleep(sleep_for)
         except (DetectorError, Exception) as exc:
             self._set_error(str(exc))
         finally:
@@ -263,8 +272,14 @@ def resize_frame(frame, target_width: int):
     return cv2.resize(frame, (target_width, height), interpolation=cv2.INTER_AREA)
 
 
-def open_video_capture(source: int | str):
+def open_video_capture(source: int | str, rtsp_capture_options: str | None = None):
+    if isinstance(source, str) and source.lower().startswith("rtsp://"):
+        environ.setdefault(
+            "OPENCV_FFMPEG_CAPTURE_OPTIONS",
+            rtsp_capture_options or "rtsp_transport;tcp|max_delay;500000",
+        )
     capture = cv2.VideoCapture()
+    capture.set(cv2.CAP_PROP_BUFFERSIZE, 1)
     capture.set(cv2.CAP_PROP_OPEN_TIMEOUT_MSEC, 8000)
     capture.set(cv2.CAP_PROP_READ_TIMEOUT_MSEC, 8000)
     if isinstance(source, str) and source.lower().startswith("rtsp://"):
@@ -272,6 +287,16 @@ def open_video_capture(source: int | str):
     else:
         capture.open(source)
     return capture
+
+
+def drop_stale_frames(capture, stale_frame_grabs: int) -> None:
+    for _ in range(max(0, stale_frame_grabs)):
+        if not capture.grab():
+            break
+
+
+def normalized_jpeg_quality(value: int) -> int:
+    return min(95, max(35, int(value)))
 
 
 def make_status_frame(status: str, error: str | None) -> bytes:

@@ -1,5 +1,5 @@
 from cctv_ai.detections import BBox, Detection
-from cctv_ai.pipeline import is_phone_near_person
+from cctv_ai.pipeline import is_phone_near_person, normalized_jpeg_quality
 from cctv_ai.tracker import Track
 
 
@@ -16,3 +16,8 @@ def test_phone_far_from_person_does_not_count_as_near():
 
     assert not is_phone_near_person(phone, track)
 
+
+def test_jpeg_quality_is_clamped_to_reasonable_range():
+    assert normalized_jpeg_quality(10) == 35
+    assert normalized_jpeg_quality(70) == 70
+    assert normalized_jpeg_quality(100) == 95

@@ -21,3 +21,12 @@ def test_display_camera_source_uses_resolved_rtsp_url():
     config = AppConfig(nvr_username="operator", nvr_password="pw", nvr_channel="3")
 
     assert display_camera_source(config) == "rtsp://operator:pw@192.168.100.203:554/Streaming/Channels/301"
+
+
+def test_default_config_uses_low_latency_processing_profile():
+    config = AppConfig()
+
+    assert config.stream_fps == 10
+    assert config.frame_width == 640
+    assert config.jpeg_quality == 70
+    assert config.rtsp_stale_frame_grabs == 2

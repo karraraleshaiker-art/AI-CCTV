@@ -25,8 +25,11 @@ class AppConfig:
     model_name: str = "yolov8n.pt"
     confidence: float = 0.35
     iou_threshold: float = 0.45
-    stream_fps: int = 15
-    frame_width: int = 960
+    stream_fps: int = 10
+    frame_width: int = 640
+    jpeg_quality: int = 70
+    rtsp_stale_frame_grabs: int = 2
+    rtsp_capture_options: str = "rtsp_transport;tcp|max_delay;500000"
     phone_persistence_frames: int = 5
     leave_persistence_frames: int = 8
     alert_cooldown_seconds: float = 10.0
