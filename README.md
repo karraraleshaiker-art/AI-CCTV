@@ -168,6 +168,14 @@ collect_logs.bat
 
 It creates a zip under `diagnostics/` that can be shared for debugging. It does not include `config.local.json` or the NVR password.
 
+To collect the logs and upload the zip to GitHub in one step, double-click:
+
+```text
+push_diagnostics_to_github.bat
+```
+
+This runs the collector, sanitizes RTSP passwords, commits only the diagnostics zip, and pushes it to GitHub. It does not commit local config files, passwords, `.venv`, model files, or evidence output.
+
 ## Detection Notes
 
 The default model is `yolov8n.pt`, which can detect `person` and `cell phone` from the COCO dataset. Phone-use detection is a practical heuristic: if a cell phone is detected inside or near the upper part of a person bounding box for several frames, the system raises a phone alert.
