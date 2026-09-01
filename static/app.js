@@ -25,6 +25,7 @@ function resizeCanvas() {
 
 function drawZone() {
   const rect = canvas.getBoundingClientRect();
+  const video = getDisplayedVideoRect();
   ctx.clearRect(0, 0, rect.width, rect.height);
   if (zone.length === 0) return;
 
@@ -33,18 +34,20 @@ function drawZone() {
   ctx.fillStyle = "rgba(243, 201, 79, 0.14)";
   ctx.beginPath();
   zone.forEach(([x, y], index) => {
-    const px = x * rect.width;
-    const py = y * rect.height;
+    const px = video.x + x * video.width;
+    const py = video.y + y * video.height;
     if (index === 0) ctx.moveTo(px, py);
     else ctx.lineTo(px, py);
   });
-  if (zone.length >= 3) ctx.closePath();
-  ctx.fill();
+  if (zone.length >= 3) {
+    ctx.closePath();
+    ctx.fill();
+  }
   ctx.stroke();
 
   for (const [x, y] of zone) {
     ctx.beginPath();
-    ctx.arc(x * rect.width, y * rect.height, 5, 0, Math.PI * 2);
+    ctx.arc(video.x + x * video.width, video.y + y * video.height, 5, 0, Math.PI * 2);
     ctx.fillStyle = "#f3c94f";
     ctx.fill();
   }
@@ -53,12 +56,29 @@ function drawZone() {
 canvas.addEventListener("click", (event) => {
   if (!editing) return;
   const rect = canvas.getBoundingClientRect();
-  zone.push([
-    Math.min(1, Math.max(0, (event.clientX - rect.left) / rect.width)),
-    Math.min(1, Math.max(0, (event.clientY - rect.top) / rect.height)),
-  ]);
+  const video = getDisplayedVideoRect();
+  const x = event.clientX - rect.left - video.x;
+  const y = event.clientY - rect.top - video.y;
+  if (x < 0 || y < 0 || x > video.width || y > video.height) return;
+  zone.push([Math.min(1, Math.max(0, x / video.width)), Math.min(1, Math.max(0, y / video.height))]);
   drawZone();
 });
+
+function getDisplayedVideoRect() {
+  const rect = canvas.getBoundingClientRect();
+  const naturalWidth = stream.naturalWidth || 16;
+  const naturalHeight = stream.naturalHeight || 9;
+  const containerRatio = rect.width / rect.height;
+  const videoRatio = naturalWidth / naturalHeight;
+
+  if (containerRatio > videoRatio) {
+    const width = rect.height * videoRatio;
+    return { x: (rect.width - width) / 2, y: 0, width, height: rect.height };
+  }
+
+  const height = rect.width / videoRatio;
+  return { x: 0, y: (rect.height - height) / 2, width: rect.width, height };
+}
 
 editButton.addEventListener("click", () => {
   editing = !editing;

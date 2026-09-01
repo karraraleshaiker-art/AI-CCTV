@@ -6,7 +6,7 @@ from contextlib import asynccontextmanager
 from pathlib import Path
 
 from fastapi import FastAPI, HTTPException
-from fastapi.responses import HTMLResponse, StreamingResponse
+from fastapi.responses import HTMLResponse, PlainTextResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
@@ -85,6 +85,14 @@ def create_app(config: AppConfig) -> FastAPI:
     async def get_alerts(limit: int = 100) -> dict[str, object]:
         return {"alerts": with_evidence_urls(pipeline.alerts.recent(limit=limit))}
 
+    @app.get("/api/logs", response_class=PlainTextResponse)
+    async def get_logs(lines: int = 200, log: str = "app") -> str:
+        log_name = "native_stderr.log" if log == "native" else "ai_cctv.log"
+        log_path = Path(config.log_dir) / log_name
+        if not log_path.exists():
+            return "No runtime log file has been created yet."
+        return tail_text(log_path, max_lines=min(max(lines, 1), 1000))
+
     @app.post("/api/alerts/{alert_id}/ack")
     async def acknowledge_alert(alert_id: str) -> dict[str, object]:
         if not pipeline.alerts.acknowledge(alert_id):
@@ -122,11 +130,18 @@ def with_evidence_urls(alerts: list[dict[str, object]]) -> list[dict[str, object
     return payload
 
 
+def tail_text(path: Path, max_lines: int) -> str:
+    return "\n".join(path.read_text(encoding="utf-8", errors="replace").splitlines()[-max_lines:])
+
+
 def main() -> None:
     import uvicorn
 
     args = parse_args()
     config = AppConfig.from_file(args.config)
+    from .logging_utils import configure_logging
+
+    configure_logging(config.log_dir)
     app = create_app(config)
     uvicorn.run(app, host=args.host, port=args.port)
 

@@ -143,6 +143,31 @@ The NVR main stream is `2560x1440`. The default AI processing profile now keeps 
 
 If the processed FPS stays below the target, the model is the bottleneck even if Windows Task Manager does not show 100% CPU/GPU. For more speed, reduce `model_imgsz` to `736` or `640`. For better far-person detection, raise `model_imgsz` to `1280`, but expect lower FPS.
 
+Decoder messages such as `Could not find ref with POC` or `cu_qp_delta ... outside the valid range` usually come from the NVR video encoding stream, especially H.265/H.265+ under packet loss or decoder incompatibility. If gray frames continue, change the NVR camera encoding to H.264, disable H.265+, lower bitrate slightly, and set a regular I-frame interval. The app skips flat gray frames so the dashboard does not replace the last good image with a broken decoder frame.
+
+## Runtime Logs
+
+The launcher writes diagnostics without saving the NVR password:
+
+- `runtime_logs/ai_cctv.log`: app status, FPS, detections, alerts, reconnects
+- `runtime_logs/native_stderr.log`: OpenCV/FFmpeg decoder messages
+- `runtime_launcher.log`: launcher startup output
+
+From the dashboard, recent logs are available at:
+
+```text
+http://127.0.0.1:8000/api/logs
+http://127.0.0.1:8000/api/logs?log=native
+```
+
+To package logs after a bad run, double-click:
+
+```text
+collect_logs.bat
+```
+
+It creates a zip under `diagnostics/` that can be shared for debugging. It does not include `config.local.json` or the NVR password.
+
 ## Detection Notes
 
 The default model is `yolov8n.pt`, which can detect `person` and `cell phone` from the COCO dataset. Phone-use detection is a practical heuristic: if a cell phone is detected inside or near the upper part of a person bounding box for several frames, the system raises a phone alert.

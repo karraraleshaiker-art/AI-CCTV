@@ -33,3 +33,5 @@ def test_default_config_uses_high_quality_processing_profile():
     assert config.jpeg_quality == 85
     assert config.rtsp_stale_frame_grabs == 0
     assert config.tracker_max_missed == 60
+    assert config.log_dir == "runtime_logs"
+    assert config.flat_frame_skip_enabled is True

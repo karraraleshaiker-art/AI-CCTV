@@ -35,6 +35,9 @@ class AppConfig:
     rtsp_capture_options: str = "rtsp_transport;tcp|max_delay;500000"
     tracker_max_missed: int = 60
     tracker_min_iou: float = 0.12
+    log_dir: str = "runtime_logs"
+    flat_frame_stddev_threshold: float = 4.0
+    flat_frame_skip_enabled: bool = True
     phone_persistence_frames: int = 5
     leave_persistence_frames: int = 8
     alert_cooldown_seconds: float = 10.0

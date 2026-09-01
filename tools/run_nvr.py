@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import getpass
+import os
 import socket
 import sys
 import threading
@@ -12,6 +13,7 @@ import uvicorn
 
 from cctv_ai.app import create_app
 from cctv_ai.config import AppConfig, build_rtsp_path, build_rtsp_url as build_config_rtsp_url
+from cctv_ai.logging_utils import configure_logging
 from tools.rtsp_probe import mask_password
 
 
@@ -47,10 +49,14 @@ def main() -> None:
 
     camera_source = build_rtsp_url(nvr_host, username, password, DEFAULT_CHANNEL, DEFAULT_STREAM, DEFAULT_URL_STYLE)
     config = replace(AppConfig(), camera_source=camera_source)
+    log_file = configure_logging(config.log_dir)
+    native_log_file = redirect_native_stderr(Path(config.log_dir) / "native_stderr.log")
 
     dashboard_url = f"http://{DASHBOARD_HOST}:{DASHBOARD_PORT}"
     print("\nUsing camera:")
     print(mask_password(camera_source))
+    print(f"Runtime log: {log_file}")
+    print(f"Native decoder log: {native_log_file}")
     print(f"\nOpening dashboard: {dashboard_url}")
     print("If the browser does not open, paste that address into Chrome or Edge.")
     print("Leave this window open. Press CTRL+C to stop.\n")
@@ -70,6 +76,14 @@ def install_output_log() -> None:
     sys.stdout = Tee(sys.stdout, log_file)
     sys.stderr = Tee(sys.stderr, log_file)
     print(f"Writing launcher log to: {log_path.resolve()}\n")
+
+
+def redirect_native_stderr(path: Path) -> Path:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_APPEND)
+    os.dup2(fd, 2)
+    os.close(fd)
+    return path
 
 
 class Tee:

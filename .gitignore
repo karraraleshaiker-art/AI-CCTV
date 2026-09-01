@@ -7,5 +7,7 @@ runtime_state.json
 config.json
 config.local.json
 runtime_launcher.log
+runtime_logs/
+diagnostics/
 output/
 spreadsheet_work/node_modules/

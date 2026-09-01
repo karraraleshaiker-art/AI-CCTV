@@ -3,6 +3,7 @@ from __future__ import annotations
 import threading
 import time
 from dataclasses import dataclass
+import logging
 from os import environ
 from pathlib import Path
 from typing import Any
@@ -17,6 +18,9 @@ from .detector import DetectorError, YoloDetector, split_detections
 from .state import RuntimeState
 from .tracker import PersonTracker, Track
 from .zones import Zone
+
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass(slots=True)
@@ -56,6 +60,8 @@ class CCTVPipeline:
         self._error: str | None = None
         self._status = "Starting"
         self._tracks_payload: list[dict[str, Any]] = []
+        self._last_frame_log = 0.0
+        self._flat_frame_count = 0
 
     def start(self) -> None:
         if self._thread and self._thread.is_alive():
@@ -105,9 +111,18 @@ class CCTVPipeline:
             )
             self._set_status("Connecting to camera")
             camera_source = resolve_camera_source(self.config)
+            logger.info("Opening camera source %s", mask_camera_source(str(camera_source)))
             capture = open_video_capture(camera_source, self.config.rtsp_capture_options)
             if not capture.isOpened():
                 raise RuntimeError(f"Could not open camera source: {mask_camera_source(str(camera_source))}")
+            logger.info(
+                "Camera opened. frame_width=%s model_imgsz=%s confidence=%s target_fps=%s jpeg_quality=%s",
+                self.config.frame_width,
+                self.config.model_imgsz,
+                self.config.confidence,
+                self.config.stream_fps,
+                self.config.jpeg_quality,
+            )
 
             self._set_status("Waiting for frames")
             last_tick = time.monotonic()
@@ -121,6 +136,8 @@ class CCTVPipeline:
                 ok, frame = capture.read()
                 if not ok:
                     failed_reads += 1
+                    if failed_reads == 1 or failed_reads % 10 == 0:
+                        logger.warning("Camera read failed. consecutive_failed_reads=%s", failed_reads)
                     if failed_reads % max(1, self.config.failed_read_reconnect_frames) == 0:
                         self._set_error(
                             "Connected to camera, but no frames are arriving. Check RTSP stream, channel, "
@@ -130,6 +147,7 @@ class CCTVPipeline:
                         if self._stop.wait(self.config.camera_reconnect_seconds):
                             break
                         self._set_status("Reconnecting to camera")
+                        logger.warning("Reconnecting to camera after failed reads")
                         capture = open_video_capture(camera_source, self.config.rtsp_capture_options)
                         failed_reads = 0
                     time.sleep(0.2)
@@ -137,6 +155,12 @@ class CCTVPipeline:
 
                 failed_reads = 0
                 frame = resize_frame(frame, self.config.frame_width)
+                if self.config.flat_frame_skip_enabled and is_flat_frame(frame, self.config.flat_frame_stddev_threshold):
+                    self._flat_frame_count += 1
+                    if self._flat_frame_count == 1 or self._flat_frame_count % 20 == 0:
+                        logger.warning("Skipping flat/gray frame. count=%s", self._flat_frame_count)
+                    continue
+                self._flat_frame_count = 0
                 detections = detector.detect(frame)
                 people, phones = split_detections(detections)
                 tracks = self.tracker.update(people)
@@ -165,11 +189,13 @@ class CCTVPipeline:
                         self._fps = frames_since_tick / elapsed
                     frames_since_tick = 0
                     last_tick = now
+                    self._log_frame_stats(tracks, people, phones)
 
                 sleep_for = target_delay - (time.monotonic() - loop_started)
                 if sleep_for > 0:
                     time.sleep(sleep_for)
         except (DetectorError, Exception) as exc:
+            logger.exception("Pipeline stopped because of an error")
             self._set_error(str(exc))
         finally:
             if capture is not None:
@@ -178,11 +204,13 @@ class CCTVPipeline:
     def _set_status(self, status: str) -> None:
         with self._lock:
             self._status = status
+        logger.info("Status changed: %s", status)
 
     def _set_error(self, error: str) -> None:
         with self._lock:
             self._error = error
             self._status = "Camera error"
+        logger.error("Camera error: %s", error)
 
     def _evaluate_tracks(self, tracks: list[Track], phones: list[Detection], zone: Zone) -> list[PendingAlert]:
         pending_alerts: list[PendingAlert] = []
@@ -231,6 +259,12 @@ class CCTVPipeline:
                 message=pending.message,
                 evidence_path=evidence_path,
             )
+            logger.warning(
+                "Alert created kind=%s track_id=%s evidence=%s",
+                pending.kind,
+                pending.track_id,
+                evidence_path,
+            )
 
     def _save_evidence_frame(self, alert: PendingAlert, frame) -> Path | None:
         evidence_dir = Path(self.config.evidence_dir)
@@ -266,6 +300,23 @@ class CCTVPipeline:
             cv2.putText(frame, label, (x1, max(18, y1 - 8)), cv2.FONT_HERSHEY_SIMPLEX, 0.55, color, 2)
         return frame
 
+    def _log_frame_stats(self, tracks: list[Track], people: list[Detection], phones: list[Detection]) -> None:
+        now = time.monotonic()
+        if now - self._last_frame_log < 5.0:
+            return
+        self._last_frame_log = now
+        with self._lock:
+            fps = self._fps
+            frame_count = self._frame_count
+        logger.info(
+            "Frame stats frame_count=%s fps=%.2f tracks=%s people_detections=%s phone_detections=%s",
+            frame_count,
+            fps,
+            len(tracks),
+            len(people),
+            len(phones),
+        )
+
 
 def resize_frame(frame, target_width: int):
     if target_width <= 0 or frame.shape[1] <= target_width:
@@ -300,6 +351,12 @@ def drop_stale_frames(capture, stale_frame_grabs: int) -> None:
 
 def normalized_jpeg_quality(value: int) -> int:
     return min(95, max(35, int(value)))
+
+
+def is_flat_frame(frame, stddev_threshold: float) -> bool:
+    if frame is None or frame.size == 0:
+        return True
+    return float(np.std(frame)) <= stddev_threshold
 
 
 def make_status_frame(status: str, error: str | None) -> bytes:

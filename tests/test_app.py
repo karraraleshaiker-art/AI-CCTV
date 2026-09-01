@@ -1,4 +1,4 @@
-from cctv_ai.app import mask_camera_source, with_evidence_urls
+from cctv_ai.app import mask_camera_source, tail_text, with_evidence_urls
 
 
 def test_mask_camera_source_hides_rtsp_password():
@@ -15,3 +15,10 @@ def test_with_evidence_urls_uses_evidence_filename_only():
     alerts = [{"evidence_path": "output/evidence/example.jpg"}]
 
     assert with_evidence_urls(alerts)[0]["evidence_url"] == "/evidence/example.jpg"
+
+
+def test_tail_text_returns_requested_line_count(tmp_path):
+    path = tmp_path / "app.log"
+    path.write_text("one\ntwo\nthree\n", encoding="utf-8")
+
+    assert tail_text(path, 2) == "two\nthree"

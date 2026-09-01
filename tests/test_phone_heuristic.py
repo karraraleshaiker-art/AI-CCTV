@@ -1,5 +1,7 @@
 from cctv_ai.detections import BBox, Detection
-from cctv_ai.pipeline import is_phone_near_person, normalized_jpeg_quality
+import numpy as np
+
+from cctv_ai.pipeline import is_flat_frame, is_phone_near_person, normalized_jpeg_quality
 from cctv_ai.tracker import Track
 
 
@@ -21,3 +23,9 @@ def test_jpeg_quality_is_clamped_to_reasonable_range():
     assert normalized_jpeg_quality(10) == 35
     assert normalized_jpeg_quality(70) == 70
     assert normalized_jpeg_quality(100) == 95
+
+
+def test_flat_frame_detection_flags_uniform_gray_frame():
+    frame = np.full((20, 20, 3), 128, dtype=np.uint8)
+
+    assert is_flat_frame(frame, 4.0)
