@@ -39,11 +39,8 @@ It asks for:
 
 - NVR username
 - NVR password
-- channel number
-- main stream or substream
-- RTSP URL style
 
-Then it opens the dashboard and starts processing the NVR camera. Keep the batch window open while the system is running. Press `CTRL+C` in that window to stop it.
+It uses the saved camera settings: NVR `192.168.100.203`, channel `14`, main stream, Hikvision RTSP path `/Streaming/Channels/1401`. Then it opens the dashboard and starts processing the NVR camera. Keep the batch window open while the system is running. Press `CTRL+C` in that window to stop it.
 
 The launcher checks for Python packages first. If `.venv` is missing, it creates it. If required packages are missing, it installs `requirements.txt`. The NVR password is typed at launch time and is not saved to the repo.
 

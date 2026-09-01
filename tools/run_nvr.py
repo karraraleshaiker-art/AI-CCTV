@@ -26,9 +26,15 @@ DASHBOARD_PORT = 8000
 
 def main() -> None:
     install_output_log()
-    print("Enter your NVR details. Press Enter to use the value in brackets.\n")
+    print("Using saved NVR settings:")
+    print(f"  NVR IP: {DEFAULT_HOST}")
+    print(f"  RTSP port: {DEFAULT_PORT}")
+    print(f"  Channel: {DEFAULT_CHANNEL}")
+    print(f"  Stream: {DEFAULT_STREAM}")
+    print(f"  RTSP style: {DEFAULT_URL_STYLE}")
+    print("Only the NVR login is required. The password is not saved.\n")
 
-    nvr_host = prompt_default("NVR IP", DEFAULT_HOST)
+    nvr_host = DEFAULT_HOST
     if not port_is_free(nvr_host, DEFAULT_PORT):
         print(f"Network check passed: {nvr_host}:{DEFAULT_PORT} is reachable.")
     else:
@@ -38,37 +44,8 @@ def main() -> None:
 
     username = prompt_default("NVR username", "admin")
     password = getpass.getpass("NVR password: ")
-    channel = prompt_default("Channel number", DEFAULT_CHANNEL)
-    stream = prompt_choice("Stream type", {"1": "main", "2": "sub", "main": "main", "sub": "sub"}, default=DEFAULT_STREAM)
-    url_style = prompt_choice(
-        "RTSP URL style",
-        {
-            "1": "generic",
-            "2": "hikvision",
-            "3": "dahua",
-            "4": "manual",
-            "stream": "generic",
-            "0.1": "generic",
-            "0.2": "generic",
-            "g": "generic",
-            "h": "hikvision",
-            "d": "dahua",
-            "m": "manual",
-            "hikvision": "hikvision",
-            "generic": "generic",
-            "dahua": "dahua",
-            "manual": "manual",
-        },
-        default=DEFAULT_URL_STYLE,
-        lines=[
-            "1 = stream style like /0.1 or /0.2",
-            "2 = channel style like /Streaming/Channels/101",
-            "3 = Dahua style like /cam/realmonitor?channel=1&subtype=0",
-            "4 = I will type the RTSP path myself",
-        ],
-    )
 
-    camera_source = build_rtsp_url(nvr_host, username, password, channel, stream, url_style)
+    camera_source = build_rtsp_url(nvr_host, username, password, DEFAULT_CHANNEL, DEFAULT_STREAM, DEFAULT_URL_STYLE)
     config = replace(AppConfig(), camera_source=camera_source)
 
     dashboard_url = f"http://{DASHBOARD_HOST}:{DASHBOARD_PORT}"
@@ -108,6 +85,9 @@ class Tee:
     def flush(self) -> None:
         for stream in self.streams:
             stream.flush()
+
+    def isatty(self) -> bool:
+        return any(getattr(stream, "isatty", lambda: False)() for stream in self.streams)
 
 
 def prompt_choice(
