@@ -1,0 +1,32 @@
+{
+  "camera_source": "",
+  "input_mode": "nvr_rtsp",
+  "nvr_host": "192.168.100.203",
+  "nvr_port": 554,
+  "nvr_username": "admin",
+  "nvr_password": "CHANGE_ME",
+  "nvr_channel": "14",
+  "nvr_stream": "main",
+  "nvr_url_style": "hikvision",
+  "nvr_path": "",
+  "model_name": "yolov8n.pt",
+  "confidence": 0.35,
+  "iou_threshold": 0.45,
+  "stream_fps": 15,
+  "frame_width": 960,
+  "phone_persistence_frames": 5,
+  "leave_persistence_frames": 8,
+  "alert_cooldown_seconds": 10,
+  "alert_history_path": "output/alerts/alerts.jsonl",
+  "alert_history_limit": 200,
+  "evidence_dir": "output/evidence",
+  "failed_read_reconnect_frames": 25,
+  "camera_reconnect_seconds": 5,
+  "state_path": "runtime_state.json",
+  "initial_zone": [
+    [0.2, 0.2],
+    [0.8, 0.2],
+    [0.8, 0.85],
+    [0.2, 0.85]
+  ]
+}

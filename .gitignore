@@ -1,0 +1,11 @@
+.venv/
+__pycache__/
+.pytest_cache/
+*.py[cod]
+yolov8n.pt
+runtime_state.json
+config.json
+config.local.json
+runtime_launcher.log
+output/
+spreadsheet_work/node_modules/

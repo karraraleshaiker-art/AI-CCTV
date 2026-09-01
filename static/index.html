@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>AI CCTV Monitor</title>
+    <link rel="stylesheet" href="/static/styles.css" />
+  </head>
+  <body>
+    <main class="shell">
+      <section class="viewer">
+        <div class="topbar">
+          <div>
+            <h1>AI CCTV Monitor</h1>
+            <p id="cameraMeta">Starting camera...</p>
+          </div>
+          <div class="actions">
+            <button id="editZone" type="button">Edit Zone</button>
+            <button id="clearZone" type="button">Clear</button>
+            <button id="saveZone" type="button">Save Zone</button>
+          </div>
+        </div>
+        <div id="videoWrap" class="video-wrap">
+          <img id="stream" src="/video" alt="Live CCTV stream" />
+          <canvas id="zoneCanvas"></canvas>
+        </div>
+      </section>
+
+      <aside class="panel">
+        <section>
+          <h2>Status</h2>
+          <dl class="metrics">
+            <div><dt>FPS</dt><dd id="fps">0</dd></div>
+            <div><dt>Frames</dt><dd id="frames">0</dd></div>
+            <div><dt>People</dt><dd id="people">0</dd></div>
+          </dl>
+          <p id="error" class="error" hidden></p>
+        </section>
+
+        <section>
+          <h2>Tracked People</h2>
+          <ol id="tracks" class="tracks"></ol>
+        </section>
+
+        <section>
+          <h2>Live Alerts</h2>
+          <ol id="alerts" class="alerts"></ol>
+        </section>
+      </aside>
+    </main>
+    <script src="/static/app.js"></script>
+  </body>
+</html>
